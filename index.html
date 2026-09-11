@@ -16,7 +16,6 @@
       -webkit-tap-highlight-color: transparent;
       padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 85px);
     }
-    /* Safe Area calibrata per Dynamic Island (iPhone 14/15/16 Pro) e Notch */
     .safe-top {
       padding-top: env(safe-area-inset-top, 47px);
       padding-top: max(env(safe-area-inset-top), 54px);
@@ -28,7 +27,7 @@
 </head>
 <body class="bg-slate-100 text-slate-900 font-sans antialiased">
 
-  <!-- OVERLAY SPINNER DI CARICAMENTO (BLOCCA L'INTERFACCIA) -->
+  <!-- OVERLAY SPINNER DI CARICAMENTO -->
   <div id="loadingOverlay" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex flex-col items-center justify-center gap-3 transition-opacity">
     <div class="w-12 h-12 border-4 border-indigo-400/30 border-t-indigo-500 rounded-full animate-spin"></div>
     <div class="text-center">
@@ -37,7 +36,7 @@
     </div>
   </div>
 
-  <!-- HEADER ELEGANTE CON SELETTORE SQUADRA INTEGRATO -->
+  <!-- HEADER CON SELETTORE SQUADRE ALLINEATO ALLE SCHEDE REALI -->
   <header class="sticky top-0 z-30 bg-indigo-950 text-white shadow-md border-b border-indigo-900/60 safe-top px-4 pb-3">
     <div class="max-w-md mx-auto space-y-2">
       <div class="flex items-center justify-between">
@@ -46,7 +45,7 @@
             ⚽
           </div>
           <div>
-            <h1 class="text-xs font-black tracking-tight text-white leading-tight">Cresole 80</h1>
+            <h1 class="text-xs font-black tracking-tight text-white leading-tight">S.S. Cresole 80</h1>
             <p id="subHeader" class="text-[10px] text-indigo-300 font-bold">Gestione Sportiva</p>
           </div>
         </div>
@@ -59,15 +58,14 @@
         </button>
       </div>
 
-      <!-- SELETTORE SQUADRA NELLA NAVBAR TOP -->
+      <!-- SELETTORE SQUADRA -->
       <div class="relative">
         <select id="teamSelect" onchange="onTeamChange()" class="w-full bg-indigo-900/90 border border-indigo-700/80 rounded-xl px-3 py-2 text-xs font-extrabold text-white appearance-none outline-none focus:ring-2 focus:ring-indigo-400">
           <option value="Presenze_Esordienti2">Esordienti 2° Anno</option>
           <option value="Presenze_Pulcini2">Pulcini 2° Anno</option>
           <option value="Presenze_Pulcini1">Pulcini 1° Anno</option>
           <option value="Presenze_Primi_Calci">Primi Calci</option>
-          <option value="Presenze_Piccoli_Amici2">Piccoli Amici 2° Anno</option>
-          <option value="Presenze_Piccoli_Amici1">Piccoli Amici 1° Anno</option>
+          <option value="Presenze_Piccoli_Amici">Piccoli Amici</option>
           <option value="Presenze_Allenatori">Staff / Allenatori</option>
         </select>
         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-indigo-300">
@@ -79,7 +77,7 @@
     </div>
   </header>
 
-  <!-- MENU LATERALE A SCOMPARSA (DRAWER) -->
+  <!-- MENU LATERALE (DRAWER) -->
   <div id="drawerOverlay" onclick="toggleMenu()" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 hidden transition-opacity"></div>
   <aside id="drawerMenu" class="fixed top-0 right-0 bottom-0 w-72 bg-white z-50 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col safe-top safe-bottom p-5">
     <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
@@ -122,7 +120,7 @@
     </div>
 
     <div class="text-[10px] text-slate-400 text-center pt-3 border-t border-slate-100">
-      Cresole 80 App • v2.1
+      Cresole 80 App • v2.2
     </div>
   </aside>
 
@@ -153,7 +151,7 @@
       </div>
     </div>
 
-    <!-- STATISTICHE CONTATORI -->
+    <!-- STATISTICHE RAPIDE -->
     <div class="grid grid-cols-4 gap-1.5 text-center text-xs font-bold">
       <div class="bg-white py-2 px-1 rounded-xl border border-slate-200/80 shadow-xs">
         <span class="text-[9px] text-slate-400 uppercase block font-semibold">Presenti</span>
@@ -252,16 +250,18 @@
     }
 
     async function init() {
-      // 1. Controlla prima i parametri URL (?team=...)
       const urlParams = new URLSearchParams(window.location.search);
       const teamQuery = urlParams.get('team');
-
-      // 2. Se non c'è nel link, controlla la sessione salvata nel telefono
       const savedTeam = localStorage.getItem('cresole80_selected_team');
 
       const select = document.getElementById('teamSelect');
       let targetTeam = teamQuery || savedTeam || "Presenze_Esordienti2";
       if (!targetTeam.startsWith("Presenze_")) targetTeam = "Presenze_" + targetTeam;
+
+      // Normalizzazione se qualcuno aveva memorizzato "Presenze_Piccoli_Amici1" o "2"
+      if (targetTeam === "Presenze_Piccoli_Amici1" || targetTeam === "Presenze_Piccoli_Amici2") {
+        targetTeam = "Presenze_Piccoli_Amici";
+      }
 
       for (let i = 0; i < select.options.length; i++) {
         if (select.options[i].value.toLowerCase() === targetTeam.toLowerCase()) {
@@ -297,6 +297,9 @@
       showLoading("Caricamento Squadra...");
       try {
         const res = await fetch(`${API_URL}?team=${encodeURIComponent(currentTeam)}`);
+        if (!res.ok) {
+          throw new Error(`Errore HTTP: ${res.status}`);
+        }
         const data = await res.json();
 
         if (data.status === "success") {
@@ -305,10 +308,10 @@
           document.getElementById('subHeader').innerText = `${appData.players.length} Atleti in rosa`;
           populateEvents();
         } else {
-          alert("Errore: " + data.message);
+          alert("Attenzione: " + data.message);
         }
       } catch (err) {
-        alert("Errore durante il recupero dei dati dal foglio Google.");
+        alert("Impossibile caricare i dati della scheda. Verifica che la scheda esista sul foglio Google.");
       } finally {
         hideLoading();
       }
@@ -316,10 +319,20 @@
 
     function onTeamChange() {
       currentTeam = document.getElementById('teamSelect').value;
-      // Salva la scelta nella sessione del telefono
       localStorage.setItem('cresole80_selected_team', currentTeam);
       updateDrawerTeamTitle();
       loadTeamData();
+    }
+
+    // Funzione di utilità per convertire le date DD/MM/YYYY o DD-MM-YYYY in oggetto Date
+    function parseCustomDate(dateStr) {
+      if (!dateStr) return null;
+      const parts = dateStr.split(/[-/]/);
+      if (parts.length === 3) {
+        // Formato DD/MM/YYYY
+        return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+      }
+      return new Date(dateStr);
     }
 
     function populateEvents() {
@@ -340,7 +353,43 @@
         select.appendChild(opt);
       });
 
-      select.selectedIndex = appData.events.length - 1;
+      // --- LOGICA SELEZIONE DATA DI DEFAULT ---
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      let targetIndex = -1;
+      let exactTodayIndex = -1;
+      let closestPastIndex = -1;
+      let closestPastDiff = Infinity;
+
+      appData.events.forEach((ev, idx) => {
+        const evDate = parseCustomDate(ev.date);
+        if (evDate) {
+          evDate.setHours(0, 0, 0, 0);
+          const diff = today.getTime() - evDate.getTime();
+
+          // 1. Corrispondenza esatta con oggi
+          if (diff === 0) {
+            exactTodayIndex = idx;
+          }
+          // 2. Data passata o uguale ad oggi: cerchiamo quella più vicina
+          else if (diff > 0 && diff < closestPastDiff) {
+            closestPastDiff = diff;
+            closestPastIndex = idx;
+          }
+        }
+      });
+
+      if (exactTodayIndex !== -1) {
+        targetIndex = exactTodayIndex;
+      } else if (closestPastIndex !== -1) {
+        targetIndex = closestPastIndex;
+      } else {
+        // Se tutte le date sono nel futuro, seleziona la prima disponibile
+        targetIndex = 0;
+      }
+
+      select.selectedIndex = targetIndex;
       onEventChange();
     }
 
@@ -496,7 +545,6 @@
         });
         const resData = await res.json();
         if (resData.status === "success") {
-          // Inserimento istantaneo senza attendere il refresh completo
           if (resData.newPlayer) {
             appData.players.push(resData.newPlayer);
             currentAttendance[resData.newPlayer.row] = "Presente";
@@ -506,6 +554,7 @@
           } else {
             await loadTeamData();
           }
+          alert(`✅ ${name} aggiunto con successo!`);
         } else {
           alert("Errore: " + resData.message);
         }
@@ -529,7 +578,7 @@
       if (!dateVal) return alert("Inserisci una data valida");
 
       closeAddEventModal();
-      showLoading("Inserimento seduta...");
+      showLoading("Inserimento seduta in ordine...");
 
       try {
         const res = await fetch(API_URL, {
@@ -543,11 +592,8 @@
         });
         const resData = await res.json();
         if (resData.status === "success") {
-          // Ricarica rapida e posizionamento automatico sulla nuova seduta
+          alert("✅ Nuova data inserita in ordine cronologico!");
           await loadTeamData();
-          const select = document.getElementById('eventSelect');
-          select.selectedIndex = select.options.length - 1;
-          onEventChange();
         } else {
           alert("Errore: " + resData.message);
         }
