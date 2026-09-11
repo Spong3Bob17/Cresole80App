@@ -4,149 +4,208 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Cresole 80 - Presenze</title>
-  <!-- CONFIGURAZIONE PWA E ICONE HOMESCREEN -->
+  <meta name="theme-color" content="#312e81">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="icon-512.png">
   <link rel="apple-touch-icon" href="icon-512.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Cresole 80">
-  <meta name="theme-color" content="#3730a3">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
       -webkit-tap-highlight-color: transparent;
-      padding-bottom: env(safe-area-inset-bottom, 24px);
+      padding-bottom: calc(env(safe-area-inset-bottom, 24px) + 70px);
+    }
+    /* Risolve il problema della Dynamic Island / Notch su iPhone 15 Pro */
+    .safe-top {
+      padding-top: max(env(safe-area-inset-top), 16px);
+    }
+    .safe-bottom {
+      padding-bottom: max(env(safe-area-inset-bottom), 16px);
     }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans antialiased pb-28">
+<body class="bg-slate-100 text-slate-900 font-sans antialiased">
 
-  <!-- HEADER ELEGANTE E COMPATTO -->
-  <header class="sticky top-0 z-30 bg-indigo-800/95 backdrop-blur-md text-white shadow-sm border-b border-indigo-900 px-4 py-3">
+  <!-- HEADER ELEGANTE CON SAFE AREA IPHONE -->
+  <header class="sticky top-0 z-30 bg-indigo-900 text-white shadow-md border-b border-indigo-950 safe-top px-4 pb-3">
     <div class="max-w-md mx-auto flex items-center justify-between">
-      <div>
-        <div class="flex items-center gap-1.5">
-          <span class="text-sm font-extrabold tracking-tight">Cresole 80</span>
-          <span class="bg-indigo-600 text-[10px] font-bold px-1.5 py-0.5 rounded text-indigo-100">Presenze</span>
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full bg-indigo-800 border border-indigo-700 flex items-center justify-center text-sm font-black shadow-inner">
+          ⚽
         </div>
-        <p id="subHeader" class="text-[11px] text-indigo-200 mt-0.5">Caricamento...</p>
+        <div>
+          <h1 class="text-sm font-extrabold tracking-tight leading-tight">Cresole 80</h1>
+          <p id="subHeader" class="text-[11px] text-indigo-300 font-medium">Caricamento...</p>
+        </div>
       </div>
 
-      <div class="flex items-center gap-1.5">
-        <button onclick="openPlayerModal()" class="bg-indigo-700/80 active:bg-indigo-600 text-white text-[11px] font-bold py-1.5 px-2.5 rounded-lg border border-indigo-500/40 shadow-sm transition">
-          ➕ Atleta
-        </button>
-        <button onclick="openAddEventModal()" class="bg-indigo-600 active:bg-indigo-500 text-white text-[11px] font-bold py-1.5 px-2.5 rounded-lg border border-indigo-400/40 shadow-sm transition">
-          ➕ Data
-        </button>
-      </div>
+      <!-- BOTTONE MENU HAMBURGER -->
+      <button onclick="toggleMenu()" class="w-10 h-10 rounded-xl bg-indigo-800/80 active:bg-indigo-700 text-indigo-100 border border-indigo-700 flex items-center justify-center shadow-sm transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
     </div>
   </header>
+
+  <!-- MENU LATERALE A SCOMPARSA (DRAWER) -->
+  <div id="drawerOverlay" onclick="toggleMenu()" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 hidden transition-opacity"></div>
+  <aside id="drawerMenu" class="fixed top-0 right-0 bottom-0 w-72 bg-white z-50 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col safe-top safe-bottom p-5">
+    <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+      <div>
+        <h2 class="text-sm font-black text-slate-900">Pannello Squadra</h2>
+        <span class="text-[11px] text-indigo-600 font-bold">Gestione & Strumenti</span>
+      </div>
+      <button onclick="toggleMenu()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center active:bg-slate-200">✕</button>
+    </div>
+
+    <!-- AZIONI RAPIDE -->
+    <div class="space-y-2 mb-6">
+      <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Azioni Rapide</div>
+      <button onclick="openPlayerModal(); toggleMenu();" class="w-full text-left bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2.5 transition">
+        <span>➕</span> Aggiungi Atleta
+      </button>
+      <button onclick="openAddEventModal(); toggleMenu();" class="w-full text-left bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2.5 transition">
+        <span>📅</span> Aggiungi Data / Evento
+      </button>
+    </div>
+
+    <!-- MODULI FUTURE FUNZIONALITÀ -->
+    <div class="space-y-1.5 flex-1">
+      <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-2">Moduli Suite</div>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold bg-slate-100 text-indigo-700">
+        <span>📋</span> Presenze
+      </a>
+      <div class="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-400">
+        <span class="flex items-center gap-3"><span>⚽</span> Formazioni & Campo</span>
+        <span class="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded font-bold">Presto</span>
+      </div>
+      <div class="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-400">
+        <span class="flex items-center gap-3"><span>🗓️</span> Calendario Partite</span>
+        <span class="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded font-bold">Presto</span>
+      </div>
+      <div class="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-400">
+        <span class="flex items-center gap-3"><span>⏱️</span> Test Atletici</span>
+        <span class="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded font-bold">Presto</span>
+      </div>
+    </div>
+
+    <div class="text-[10px] text-slate-400 text-center pt-4 border-t border-slate-100">
+      Cresole 80 App • v2.0
+    </div>
+  </aside>
 
   <main class="max-w-md mx-auto p-3.5 space-y-3">
 
     <!-- SELEZIONE CATEGORIA E DATA -->
-    <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200/80 space-y-2.5">
+    <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 space-y-3">
       <div class="grid grid-cols-2 gap-2">
         <div>
-          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Squadra</label>
-          <select id="teamSelect" onchange="onTeamChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
+          <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">Squadra</label>
+          <select id="teamSelect" onchange="onTeamChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
             <option value="Presenze_Esordienti2">Esordienti 2° Anno</option>
             <option value="Presenze_Pulcini2">Pulcini 2° Anno</option>
             <option value="Presenze_Pulcini1">Pulcini 1° Anno</option>
             <option value="Presenze_Primi_Calci">Primi Calci</option>
             <option value="Presenze_Piccoli_Amici2">Piccoli Amici 2° Anno</option>
             <option value="Presenze_Piccoli_Amici1">Piccoli Amici 1° Anno</option>
-            <option value="Presenze_Allenatori">Allenatori</option>
+            <option value="Presenze_Allenatori">Staff / Allenatori</option>
           </select>
         </div>
 
         <div>
-          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Seduta</label>
-          <select id="eventSelect" onchange="onEventChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
+          <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">Seduta</label>
+          <select id="eventSelect" onchange="onEventChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
             <option value="">Caricamento...</option>
           </select>
         </div>
       </div>
 
-      <!-- OPZIONE METEO PIOGGIA -->
-      <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
-        <div class="flex items-center gap-1.5">
+      <!-- METEO PIOGGIA -->
+      <div class="pt-2.5 border-t border-slate-100 flex items-center justify-between">
+        <div class="flex items-center gap-2">
           <span class="text-base">🌧️</span>
-          <label for="checkRain" class="text-xs font-bold text-slate-700 select-none cursor-pointer">Meteo Pioggia</label>
+          <div>
+            <label for="checkRain" class="text-xs font-extrabold text-slate-800 select-none cursor-pointer">Condizione Pioggia</label>
+            <p class="text-[10px] text-slate-400">Segna l'evento come piovoso</p>
+          </div>
         </div>
         <label class="relative inline-flex items-center cursor-pointer">
           <input type="checkbox" id="checkRain" onchange="toggleRain()" class="sr-only peer">
-          <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-slate-600"></div>
+          <div class="w-10 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-700"></div>
         </label>
       </div>
     </div>
 
-    <!-- STATISTICHE RAPIDE CONTAGIRI -->
+    <!-- STATISTICHE CONTATORI -->
     <div class="grid grid-cols-4 gap-1.5 text-center text-xs font-bold">
-      <div class="bg-emerald-50 text-emerald-800 py-1.5 px-1 rounded-xl border border-emerald-200/80">
-        P: <span id="countPresenti" class="text-emerald-900 font-extrabold">0</span>
+      <div class="bg-white py-2 px-1 rounded-xl border border-slate-200/80 shadow-xs">
+        <span class="text-[10px] text-slate-400 uppercase block font-semibold">Presenti</span>
+        <span id="countPresenti" class="text-emerald-700 font-black text-sm">0</span>
       </div>
-      <div class="bg-rose-50 text-rose-800 py-1.5 px-1 rounded-xl border border-rose-200/80">
-        A: <span id="countAssenti" class="text-rose-900 font-extrabold">0</span>
+      <div class="bg-white py-2 px-1 rounded-xl border border-slate-200/80 shadow-xs">
+        <span class="text-[10px] text-slate-400 uppercase block font-semibold">Assenti</span>
+        <span id="countAssenti" class="text-rose-700 font-black text-sm">0</span>
       </div>
-      <div class="bg-amber-50 text-amber-800 py-1.5 px-1 rounded-xl border border-amber-200/80">
-        G: <span id="countGiustificati" class="text-amber-900 font-extrabold">0</span>
+      <div class="bg-white py-2 px-1 rounded-xl border border-slate-200/80 shadow-xs">
+        <span class="text-[10px] text-slate-400 uppercase block font-semibold">Giustif.</span>
+        <span id="countGiustificati" class="text-amber-700 font-black text-sm">0</span>
       </div>
-      <div class="bg-purple-50 text-purple-800 py-1.5 px-1 rounded-xl border border-purple-200/80">
-        I: <span id="countInfortunati" class="text-purple-900 font-extrabold">0</span>
+      <div class="bg-white py-2 px-1 rounded-xl border border-slate-200/80 shadow-xs">
+        <span class="text-[10px] text-slate-400 uppercase block font-semibold">Infortun.</span>
+        <span id="countInfortunati" class="text-purple-700 font-black text-sm">0</span>
       </div>
     </div>
 
-    <!-- LISTA DEI RAGAZZI -->
+    <!-- LISTA RAGAZZI -->
     <div id="playerList" class="space-y-1.5">
-      <!-- Generato dinamicamente via JS -->
+      <!-- Generato da JS -->
     </div>
   </main>
 
   <!-- BARRA DI SALVATAGGIO IN BASSO FISSA -->
-  <div class="fixed bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t border-slate-200 z-20 shadow-lg">
+  <div class="fixed bottom-0 left-0 right-0 p-3.5 bg-white/95 backdrop-blur-md border-t border-slate-200 z-20 shadow-xl safe-bottom">
     <div class="max-w-md mx-auto">
-      <button onclick="saveAttendance()" id="btnSave" class="w-full bg-indigo-700 active:bg-indigo-800 text-white font-extrabold py-3.5 rounded-2xl shadow flex items-center justify-center gap-2 text-xs tracking-wide transition">
+      <button onclick="saveAttendance()" id="btnSave" class="w-full bg-indigo-700 hover:bg-indigo-800 active:scale-[0.99] text-white font-extrabold py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2 text-xs tracking-wider uppercase transition">
         <span>💾 SALVA PRESENZE</span>
       </button>
     </div>
   </div>
 
   <!-- MODAL: AGGIUNGI GIOCATORE -->
-  <div id="modalPlayer" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+  <div id="modalPlayer" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-100">
       <div class="flex items-center justify-between">
-        <h3 class="text-sm font-bold text-slate-800">Nuovo Atleta</h3>
-        <button onclick="closePlayerModal()" class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
+        <h3 class="text-sm font-extrabold text-slate-900">Nuovo Atleta</h3>
+        <button onclick="closePlayerModal()" class="text-slate-400 hover:text-slate-600 font-bold p-1 text-base">✕</button>
       </div>
       <div>
-        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Cognome e Nome</label>
-        <input type="text" id="newPlayerName" placeholder="es. Rossi Marco" class="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none">
+        <label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Cognome e Nome</label>
+        <input type="text" id="newPlayerName" placeholder="es. Rossi Mario" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 outline-none">
       </div>
       <div class="flex gap-2 pt-1">
-        <button onclick="closePlayerModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-2.5 rounded-xl text-xs font-bold">Annulla</button>
-        <button onclick="confirmAddPlayer()" id="btnConfirmPlayer" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl text-xs font-bold shadow">Aggiungi</button>
+        <button onclick="closePlayerModal()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl text-xs font-bold">Annulla</button>
+        <button onclick="confirmAddPlayer()" id="btnConfirmPlayer" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-xs font-bold shadow">Aggiungi</button>
       </div>
     </div>
   </div>
 
   <!-- MODAL: AGGIUNGI EVENTO -->
-  <div id="modalEvent" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+  <div id="modalEvent" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-100">
       <div class="flex items-center justify-between">
-        <h3 class="text-sm font-bold text-slate-800">Aggiungi Data / Seduta</h3>
-        <button onclick="closeAddEventModal()" class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
+        <h3 class="text-sm font-extrabold text-slate-900">Aggiungi Seduta</h3>
+        <button onclick="closeAddEventModal()" class="text-slate-400 hover:text-slate-600 font-bold p-1 text-base">✕</button>
       </div>
       <div class="space-y-3">
         <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Data</label>
-          <input type="date" id="newEventDate" class="w-full border border-slate-300 rounded-xl p-2 text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none">
+          <label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Data</label>
+          <input type="date" id="newEventDate" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 outline-none">
         </div>
         <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tipo Evento</label>
-          <select id="newEventType" class="w-full border border-slate-300 rounded-xl p-2 text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none">
+          <label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Tipo Evento</label>
+          <select id="newEventType" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 outline-none">
             <option value="Allenamento">Allenamento</option>
             <option value="Amichevole">Amichevole</option>
             <option value="Campionato">Partita Campionato</option>
@@ -156,8 +215,8 @@
         </div>
       </div>
       <div class="flex gap-2 pt-1">
-        <button onclick="closeAddEventModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-2.5 rounded-xl text-xs font-bold">Annulla</button>
-        <button onclick="confirmAddEvent()" id="btnConfirmEvent" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl text-xs font-bold shadow">Aggiungi</button>
+        <button onclick="closeAddEventModal()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl text-xs font-bold">Annulla</button>
+        <button onclick="confirmAddEvent()" id="btnConfirmEvent" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-xs font-bold shadow">Aggiungi</button>
       </div>
     </div>
   </div>
@@ -188,6 +247,18 @@
       }
 
       await loadTeamData();
+    }
+
+    function toggleMenu() {
+      const menu = document.getElementById('drawerMenu');
+      const overlay = document.getElementById('drawerOverlay');
+      if (menu.classList.contains('translate-x-full')) {
+        menu.classList.remove('translate-x-full');
+        overlay.classList.remove('hidden');
+      } else {
+        menu.classList.add('translate-x-full');
+        overlay.classList.add('hidden');
+      }
     }
 
     async function loadTeamData() {
@@ -245,12 +316,10 @@
 
       if (!selectedCol) return;
 
-      // Meteo pioggia per questa seduta
       const currentEv = appData.events.find(ev => String(ev.col) === selectedCol);
       isRainActive = currentEv ? Boolean(currentEv.isRain) : false;
       document.getElementById('checkRain').checked = isRainActive;
 
-      // Presenze archiviate
       const savedForDate = (appData.attendanceMap && (appData.attendanceMap[selectedCol] || appData.attendanceMap[parseInt(selectedCol)]))
         ? (appData.attendanceMap[selectedCol] || appData.attendanceMap[parseInt(selectedCol)])
         : {};
@@ -288,14 +357,14 @@
       list.innerHTML = "";
 
       if (appData.players.length === 0) {
-        list.innerHTML = `<div class="text-center py-6 text-xs text-slate-400">Nessun giocatore registrato. Clicca '+ Atleta' per aggiungerne uno.</div>`;
+        list.innerHTML = `<div class="text-center py-6 text-xs text-slate-400">Nessun giocatore registrato. Clicca il menu in alto per aggiungerne uno.</div>`;
         return;
       }
 
       appData.players.forEach(p => {
         const status = currentAttendance[p.row] || "Presente";
         const div = document.createElement('div');
-        div.className = "bg-white px-3 py-2.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between";
+        div.className = "bg-white px-3 py-2 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between";
         
         div.innerHTML = `
           <div class="font-bold text-slate-800 text-xs tracking-tight truncate mr-2">${p.name}</div>
@@ -336,7 +405,7 @@
 
       const btn = document.getElementById('btnSave');
       btn.disabled = true;
-      btn.innerText = "Salvataggio in corso...";
+      btn.innerText = "SALVATAGGIO...";
 
       const records = Object.keys(currentAttendance).map(row => ({
         row: parseInt(row),
@@ -362,7 +431,7 @@
           records.forEach(r => {
             appData.attendanceMap[colKey][r.row] = r.status;
           });
-          alert("✅ Presenze e meteo aggiornati con successo!");
+          alert("✅ Presenze e meteo salvati con successo!");
         } else {
           alert("Errore: " + resData.message);
         }
@@ -374,7 +443,6 @@
       }
     }
 
-    // GESTIONE NUOVO GIOCATORE
     function openPlayerModal() {
       document.getElementById('newPlayerName').value = "";
       document.getElementById('modalPlayer').classList.remove('hidden');
@@ -384,7 +452,7 @@
     }
     async function confirmAddPlayer() {
       const name = document.getElementById('newPlayerName').value.trim();
-      if (!name) return alert("Inserisci il cognome e nome dell'atleta");
+      if (!name) return alert("Inserisci cognome e nome dell'atleta");
 
       const btn = document.getElementById('btnConfirmPlayer');
       btn.disabled = true;
@@ -397,21 +465,20 @@
         });
         const resData = await res.json();
         if (resData.status === "success") {
-          alert(`✅ ${name} aggiunto con successo alla squadra!`);
+          alert(`✅ ${name} aggiunto con successo!`);
           closePlayerModal();
           await loadTeamData();
         } else {
           alert("Errore: " + resData.message);
         }
       } catch (err) {
-        alert("Errore di rete nell'aggiunta del giocatore.");
+        alert("Errore di connessione.");
       } finally {
         btn.disabled = false;
         btn.innerText = "Aggiungi";
       }
     }
 
-    // GESTIONE NUOVA DATA
     function openAddEventModal() {
       document.getElementById('newEventDate').valueAsDate = new Date();
       document.getElementById('modalEvent').classList.remove('hidden');
@@ -440,14 +507,14 @@
         });
         const resData = await res.json();
         if (resData.status === "success") {
-          alert("✅ Nuova data inserita in ordine cronologico!");
+          alert("✅ Data inserita in ordine cronologico!");
           closeAddEventModal();
           await loadTeamData();
         } else {
           alert("Errore: " + resData.message);
         }
       } catch (err) {
-        alert("Errore di rete nell'aggiunta dell'evento.");
+        alert("Errore durante l'inserimento.");
       } finally {
         btn.disabled = false;
         btn.innerText = "Aggiungi";
