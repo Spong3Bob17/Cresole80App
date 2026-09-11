@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Cresole 80 - Presenze</title>
-  <meta name="theme-color" content="#312e81">
+  <meta name="theme-color" content="#1e1b4b">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="icon-512.png">
   <link rel="apple-touch-icon" href="icon-512.png">
@@ -14,60 +14,90 @@
   <style>
     body {
       -webkit-tap-highlight-color: transparent;
-      padding-bottom: calc(env(safe-area-inset-bottom, 24px) + 70px);
+      padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 85px);
     }
-    /* Risolve il problema della Dynamic Island / Notch su iPhone 15 Pro */
+    /* Safe Area calibrata per Dynamic Island (iPhone 14/15/16 Pro) e Notch */
     .safe-top {
-      padding-top: max(env(safe-area-inset-top), 16px);
+      padding-top: env(safe-area-inset-top, 47px);
+      padding-top: max(env(safe-area-inset-top), 54px);
     }
     .safe-bottom {
-      padding-bottom: max(env(safe-area-inset-bottom), 16px);
+      padding-bottom: max(env(safe-area-inset-bottom, 20px), 24px);
     }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-900 font-sans antialiased">
 
-  <!-- HEADER ELEGANTE CON SAFE AREA IPHONE -->
-  <header class="sticky top-0 z-30 bg-indigo-900 text-white shadow-md border-b border-indigo-950 safe-top px-4 pb-3">
-    <div class="max-w-md mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-full bg-indigo-800 border border-indigo-700 flex items-center justify-center text-sm font-black shadow-inner">
-          ⚽
+  <!-- OVERLAY SPINNER DI CARICAMENTO (BLOCCA L'INTERFACCIA) -->
+  <div id="loadingOverlay" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex flex-col items-center justify-center gap-3 transition-opacity">
+    <div class="w-12 h-12 border-4 border-indigo-400/30 border-t-indigo-500 rounded-full animate-spin"></div>
+    <div class="text-center">
+      <p id="loadingMessage" class="text-white text-xs font-black tracking-wide uppercase">Caricamento Squadra...</p>
+      <p class="text-indigo-200 text-[10px] mt-0.5 font-medium">Attendere prego, non chiudere l'app</p>
+    </div>
+  </div>
+
+  <!-- HEADER ELEGANTE CON SELETTORE SQUADRA INTEGRATO -->
+  <header class="sticky top-0 z-30 bg-indigo-950 text-white shadow-md border-b border-indigo-900/60 safe-top px-4 pb-3">
+    <div class="max-w-md mx-auto space-y-2">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-indigo-800 border border-indigo-700 flex items-center justify-center text-sm shadow-inner">
+            ⚽
+          </div>
+          <div>
+            <h1 class="text-xs font-black tracking-tight text-white leading-tight">S.S. Cresole 80</h1>
+            <p id="subHeader" class="text-[10px] text-indigo-300 font-bold">Gestione Sportiva</p>
+          </div>
         </div>
-        <div>
-          <h1 class="text-sm font-extrabold tracking-tight leading-tight">Cresole 80</h1>
-          <p id="subHeader" class="text-[11px] text-indigo-300 font-medium">Caricamento...</p>
-        </div>
+
+        <!-- HAMBURGER MENU -->
+        <button onclick="toggleMenu()" aria-label="Menu" class="w-9 h-9 rounded-xl bg-indigo-800/90 active:bg-indigo-700 text-white border border-indigo-600/70 flex items-center justify-center shadow-md transition active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
       </div>
 
-      <!-- BOTTONE MENU HAMBURGER -->
-      <button onclick="toggleMenu()" class="w-10 h-10 rounded-xl bg-indigo-800/80 active:bg-indigo-700 text-indigo-100 border border-indigo-700 flex items-center justify-center shadow-sm transition">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h16"></path>
-        </svg>
-      </button>
+      <!-- SELETTORE SQUADRA NELLA NAVBAR TOP -->
+      <div class="relative">
+        <select id="teamSelect" onchange="onTeamChange()" class="w-full bg-indigo-900/90 border border-indigo-700/80 rounded-xl px-3 py-2 text-xs font-extrabold text-white appearance-none outline-none focus:ring-2 focus:ring-indigo-400">
+          <option value="Presenze_Esordienti2">Esordienti 2° Anno</option>
+          <option value="Presenze_Pulcini2">Pulcini 2° Anno</option>
+          <option value="Presenze_Pulcini1">Pulcini 1° Anno</option>
+          <option value="Presenze_Primi_Calci">Primi Calci</option>
+          <option value="Presenze_Piccoli_Amici2">Piccoli Amici 2° Anno</option>
+          <option value="Presenze_Piccoli_Amici1">Piccoli Amici 1° Anno</option>
+          <option value="Presenze_Allenatori">Staff / Allenatori</option>
+        </select>
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-indigo-300">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </div>
+      </div>
     </div>
   </header>
 
   <!-- MENU LATERALE A SCOMPARSA (DRAWER) -->
   <div id="drawerOverlay" onclick="toggleMenu()" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 hidden transition-opacity"></div>
   <aside id="drawerMenu" class="fixed top-0 right-0 bottom-0 w-72 bg-white z-50 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col safe-top safe-bottom p-5">
-    <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+    <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
       <div>
-        <h2 class="text-sm font-black text-slate-900">Pannello Squadra</h2>
-        <span class="text-[11px] text-indigo-600 font-bold">Gestione & Strumenti</span>
+        <h2 class="text-xs font-black text-slate-900 uppercase tracking-wider">Pannello Squadra</h2>
+        <span id="drawerTeamName" class="text-[11px] text-indigo-600 font-bold">Esordienti 2° Anno</span>
       </div>
       <button onclick="toggleMenu()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center active:bg-slate-200">✕</button>
     </div>
 
     <!-- AZIONI RAPIDE -->
     <div class="space-y-2 mb-6">
-      <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Azioni Rapide</div>
+      <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Azioni per questa squadra</div>
       <button onclick="openPlayerModal(); toggleMenu();" class="w-full text-left bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2.5 transition">
-        <span>➕</span> Aggiungi Atleta
+        <span>➕</span> Aggiungi Nuovo Atleta
       </button>
       <button onclick="openAddEventModal(); toggleMenu();" class="w-full text-left bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2.5 transition">
-        <span>📅</span> Aggiungi Data / Evento
+        <span>📅</span> Aggiungi Seduta / Partita
       </button>
     </div>
 
@@ -82,7 +112,7 @@
         <span class="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded font-bold">Presto</span>
       </div>
       <div class="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-400">
-        <span class="flex items-center gap-3"><span>🗓️</span> Calendario Partite</span>
+        <span class="flex items-center gap-3"><span>🗓️</span> Calendario Gare</span>
         <span class="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded font-bold">Presto</span>
       </div>
       <div class="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-400">
@@ -91,39 +121,24 @@
       </div>
     </div>
 
-    <div class="text-[10px] text-slate-400 text-center pt-4 border-t border-slate-100">
-      Cresole 80 App • v2.0
+    <div class="text-[10px] text-slate-400 text-center pt-3 border-t border-slate-100">
+      Cresole 80 App • v2.1
     </div>
   </aside>
 
   <main class="max-w-md mx-auto p-3.5 space-y-3">
 
-    <!-- SELEZIONE CATEGORIA E DATA -->
-    <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 space-y-3">
-      <div class="grid grid-cols-2 gap-2">
-        <div>
-          <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">Squadra</label>
-          <select id="teamSelect" onchange="onTeamChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
-            <option value="Presenze_Esordienti2">Esordienti 2° Anno</option>
-            <option value="Presenze_Pulcini2">Pulcini 2° Anno</option>
-            <option value="Presenze_Pulcini1">Pulcini 1° Anno</option>
-            <option value="Presenze_Primi_Calci">Primi Calci</option>
-            <option value="Presenze_Piccoli_Amici2">Piccoli Amici 2° Anno</option>
-            <option value="Presenze_Piccoli_Amici1">Piccoli Amici 1° Anno</option>
-            <option value="Presenze_Allenatori">Staff / Allenatori</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">Seduta</label>
-          <select id="eventSelect" onchange="onEventChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
-            <option value="">Caricamento...</option>
-          </select>
-        </div>
+    <!-- SELEZIONE SEDUTA E METEO PIOGGIA -->
+    <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 space-y-2.5">
+      <div>
+        <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">Seduta / Evento</label>
+        <select id="eventSelect" onchange="onEventChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="">Caricamento sedute...</option>
+        </select>
       </div>
 
       <!-- METEO PIOGGIA -->
-      <div class="pt-2.5 border-t border-slate-100 flex items-center justify-between">
+      <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <span class="text-base">🌧️</span>
           <div>
@@ -141,30 +156,28 @@
     <!-- STATISTICHE CONTATORI -->
     <div class="grid grid-cols-4 gap-1.5 text-center text-xs font-bold">
       <div class="bg-white py-2 px-1 rounded-xl border border-slate-200/80 shadow-xs">
-        <span class="text-[10px] text-slate-400 uppercase block font-semibold">Presenti</span>
+        <span class="text-[9px] text-slate-400 uppercase block font-semibold">Presenti</span>
         <span id="countPresenti" class="text-emerald-700 font-black text-sm">0</span>
       </div>
       <div class="bg-white py-2 px-1 rounded-xl border border-slate-200/80 shadow-xs">
-        <span class="text-[10px] text-slate-400 uppercase block font-semibold">Assenti</span>
+        <span class="text-[9px] text-slate-400 uppercase block font-semibold">Assenti</span>
         <span id="countAssenti" class="text-rose-700 font-black text-sm">0</span>
       </div>
       <div class="bg-white py-2 px-1 rounded-xl border border-slate-200/80 shadow-xs">
-        <span class="text-[10px] text-slate-400 uppercase block font-semibold">Giustif.</span>
+        <span class="text-[9px] text-slate-400 uppercase block font-semibold">Giustif.</span>
         <span id="countGiustificati" class="text-amber-700 font-black text-sm">0</span>
       </div>
       <div class="bg-white py-2 px-1 rounded-xl border border-slate-200/80 shadow-xs">
-        <span class="text-[10px] text-slate-400 uppercase block font-semibold">Infortun.</span>
+        <span class="text-[9px] text-slate-400 uppercase block font-semibold">Infortun.</span>
         <span id="countInfortunati" class="text-purple-700 font-black text-sm">0</span>
       </div>
     </div>
 
-    <!-- LISTA RAGAZZI -->
-    <div id="playerList" class="space-y-1.5">
-      <!-- Generato da JS -->
-    </div>
+    <!-- LISTA DEI RAGAZZI -->
+    <div id="playerList" class="space-y-1.5"></div>
   </main>
 
-  <!-- BARRA DI SALVATAGGIO IN BASSO FISSA -->
+  <!-- BARRA FISSA IN BASSO PER IL SALVATAGGIO -->
   <div class="fixed bottom-0 left-0 right-0 p-3.5 bg-white/95 backdrop-blur-md border-t border-slate-200 z-20 shadow-xl safe-bottom">
     <div class="max-w-md mx-auto">
       <button onclick="saveAttendance()" id="btnSave" class="w-full bg-indigo-700 hover:bg-indigo-800 active:scale-[0.99] text-white font-extrabold py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2 text-xs tracking-wider uppercase transition">
@@ -229,24 +242,43 @@
     let currentAttendance = {};
     let isRainActive = false;
 
+    function showLoading(msg = "Caricamento...") {
+      document.getElementById('loadingMessage').innerText = msg;
+      document.getElementById('loadingOverlay').classList.remove('hidden');
+    }
+
+    function hideLoading() {
+      document.getElementById('loadingOverlay').classList.add('hidden');
+    }
+
     async function init() {
+      // 1. Controlla prima i parametri URL (?team=...)
       const urlParams = new URLSearchParams(window.location.search);
       const teamQuery = urlParams.get('team');
-      if (teamQuery) {
-        const fullTeamName = teamQuery.startsWith("Presenze_") ? teamQuery : "Presenze_" + teamQuery;
-        const select = document.getElementById('teamSelect');
-        for (let i = 0; i < select.options.length; i++) {
-          if (select.options[i].value.toLowerCase() === fullTeamName.toLowerCase()) {
-            select.selectedIndex = i;
-            currentTeam = select.options[i].value;
-            break;
-          }
+
+      // 2. Se non c'è nel link, controlla la sessione salvata nel telefono
+      const savedTeam = localStorage.getItem('cresole80_selected_team');
+
+      const select = document.getElementById('teamSelect');
+      let targetTeam = teamQuery || savedTeam || "Presenze_Esordienti2";
+      if (!targetTeam.startsWith("Presenze_")) targetTeam = "Presenze_" + targetTeam;
+
+      for (let i = 0; i < select.options.length; i++) {
+        if (select.options[i].value.toLowerCase() === targetTeam.toLowerCase()) {
+          select.selectedIndex = i;
+          currentTeam = select.options[i].value;
+          break;
         }
-      } else {
-        currentTeam = document.getElementById('teamSelect').value;
       }
 
+      updateDrawerTeamTitle();
       await loadTeamData();
+    }
+
+    function updateDrawerTeamTitle() {
+      const select = document.getElementById('teamSelect');
+      const text = select.options[select.selectedIndex].text;
+      document.getElementById('drawerTeamName').innerText = text;
     }
 
     function toggleMenu() {
@@ -262,9 +294,7 @@
     }
 
     async function loadTeamData() {
-      document.getElementById('subHeader').innerText = "Sincronizzazione...";
-      document.getElementById('playerList').innerHTML = `<div class="text-center py-8 text-xs text-slate-400">Caricamento rosa...</div>`;
-
+      showLoading("Caricamento Squadra...");
       try {
         const res = await fetch(`${API_URL}?team=${encodeURIComponent(currentTeam)}`);
         const data = await res.json();
@@ -278,12 +308,17 @@
           alert("Errore: " + data.message);
         }
       } catch (err) {
-        alert("Errore durante il recupero dei dati dal foglio.");
+        alert("Errore durante il recupero dei dati dal foglio Google.");
+      } finally {
+        hideLoading();
       }
     }
 
     function onTeamChange() {
       currentTeam = document.getElementById('teamSelect').value;
+      // Salva la scelta nella sessione del telefono
+      localStorage.setItem('cresole80_selected_team', currentTeam);
+      updateDrawerTeamTitle();
       loadTeamData();
     }
 
@@ -357,7 +392,7 @@
       list.innerHTML = "";
 
       if (appData.players.length === 0) {
-        list.innerHTML = `<div class="text-center py-6 text-xs text-slate-400">Nessun giocatore registrato. Clicca il menu in alto per aggiungerne uno.</div>`;
+        list.innerHTML = `<div class="text-center py-6 text-xs text-slate-400">Nessun atleta registrato. Clicca il menu in alto per aggiungerne uno.</div>`;
         return;
       }
 
@@ -403,9 +438,7 @@
       const selectedCol = document.getElementById('eventSelect').value;
       if (!selectedCol) return alert("Seleziona o crea prima una seduta!");
 
-      const btn = document.getElementById('btnSave');
-      btn.disabled = true;
-      btn.innerText = "SALVATAGGIO...";
+      showLoading("Salvataggio Presenze...");
 
       const records = Object.keys(currentAttendance).map(row => ({
         row: parseInt(row),
@@ -436,10 +469,9 @@
           alert("Errore: " + resData.message);
         }
       } catch (err) {
-        alert("Errore durante il salvataggio.");
+        alert("Errore di connessione durante il salvataggio.");
       } finally {
-        btn.disabled = false;
-        btn.innerHTML = "<span>💾 SALVA PRESENZE</span>";
+        hideLoading();
       }
     }
 
@@ -454,9 +486,8 @@
       const name = document.getElementById('newPlayerName').value.trim();
       if (!name) return alert("Inserisci cognome e nome dell'atleta");
 
-      const btn = document.getElementById('btnConfirmPlayer');
-      btn.disabled = true;
-      btn.innerText = "Inserimento...";
+      closePlayerModal();
+      showLoading(`Aggiunta ${name} in corso...`);
 
       try {
         const res = await fetch(API_URL, {
@@ -466,16 +497,14 @@
         const resData = await res.json();
         if (resData.status === "success") {
           alert(`✅ ${name} aggiunto con successo!`);
-          closePlayerModal();
           await loadTeamData();
         } else {
           alert("Errore: " + resData.message);
+          hideLoading();
         }
       } catch (err) {
-        alert("Errore di connessione.");
-      } finally {
-        btn.disabled = false;
-        btn.innerText = "Aggiungi";
+        alert("Errore durante l'operazione.");
+        hideLoading();
       }
     }
 
@@ -491,9 +520,8 @@
       const typeVal = document.getElementById('newEventType').value;
       if (!dateVal) return alert("Inserisci una data valida");
 
-      const btn = document.getElementById('btnConfirmEvent');
-      btn.disabled = true;
-      btn.innerText = "Salvataggio...";
+      closeAddEventModal();
+      showLoading("Inserimento seduta in ordine...");
 
       try {
         const res = await fetch(API_URL, {
@@ -507,17 +535,15 @@
         });
         const resData = await res.json();
         if (resData.status === "success") {
-          alert("✅ Data inserita in ordine cronologico!");
-          closeAddEventModal();
+          alert("✅ Nuova data inserita in ordine cronologico!");
           await loadTeamData();
         } else {
           alert("Errore: " + resData.message);
+          hideLoading();
         }
       } catch (err) {
         alert("Errore durante l'inserimento.");
-      } finally {
-        btn.disabled = false;
-        btn.innerText = "Aggiungi";
+        hideLoading();
       }
     }
 
