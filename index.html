@@ -60,7 +60,7 @@
 
     <!-- LISTA RAGAZZI -->
     <div id="playerList" class="space-y-2">
-      <!-- Generato da JS -->
+      <!-- Generato dinamicamente via JS -->
     </div>
   </main>
 
@@ -104,15 +104,13 @@
   </div>
 
   <script>
-    // INCOLLA QUI IL TUO URL DI DISTRIBUZIONE GOOGLE APPS SCRIPT
     const API_URL = "https://script.google.com/macros/s/AKfycbw6lVaMmUsEj4ruFW_Y4otStD_erh4mPRMMkpXUFy0CKa9BsfJ1giBedJb0yl0Hy4yBEg/exec";
 
     let currentTeam = "Presenze_Esordienti2";
-    let appData = { players: [], events: [] };
+    let appData = { players: [], events: [], attendanceMap: {} };
     let currentAttendance = {};
 
     async function init() {
-      // Controlla se c'è un parametro team nell'URL (es: ?team=Pulcini1)
       const urlParams = new URLSearchParams(window.location.search);
       const teamQuery = urlParams.get('team');
       if (teamQuery) {
@@ -142,10 +140,11 @@
 
         if (data.status === "success") {
           appData = data;
+          if (!appData.attendanceMap) appData.attendanceMap = {};
           document.getElementById('subHeader').innerText = `${appData.players.length} Atleti in elenco`;
           populateEvents();
         } else {
-          alert("Errore: " + data.message);
+          alert("Errore caricamento dati: " + data.message);
         }
       } catch (err) {
         alert("Impossibile connettersi al Google Sheet.");
@@ -161,7 +160,7 @@
       const select = document.getElementById('eventSelect');
       select.innerHTML = "";
 
-      if (appData.events.length === 0) {
+      if (!appData.events || appData.events.length === 0) {
         select.innerHTML = `<option value="">Nessun evento presente (clicca '➕ Data')</option>`;
         document.getElementById('playerList').innerHTML = "";
         return;
@@ -169,21 +168,37 @@
 
       appData.events.forEach(ev => {
         const opt = document.createElement('option');
-        opt.value = ev.col;
+        opt.value = String(ev.col);
         opt.innerText = `${ev.date} - ${ev.type}`;
         select.appendChild(opt);
       });
 
-      // Seleziona l'ultimo evento registrato
+      // Seleziona l'ultimo evento
       select.selectedIndex = appData.events.length - 1;
       onEventChange();
     }
 
     function onEventChange() {
+      const select = document.getElementById('eventSelect');
+      const selectedCol = String(select.value);
       currentAttendance = {};
+
+      if (!selectedCol) return;
+
+      // Recupera le presenze già archiviate per questa colonna
+      const savedForDate = (appData.attendanceMap && (appData.attendanceMap[selectedCol] || appData.attendanceMap[parseInt(selectedCol)]))
+        ? (appData.attendanceMap[selectedCol] || appData.attendanceMap[parseInt(selectedCol)])
+        : {};
+
       appData.players.forEach(p => {
-        currentAttendance[p.row] = "Presente";
+        const previousValue = savedForDate[p.row] || savedForDate[String(p.row)];
+        if (previousValue && ["Presente", "Assente", "Giustificato", "Infortunato"].includes(previousValue)) {
+          currentAttendance[p.row] = previousValue;
+        } else {
+          currentAttendance[p.row] = "Presente";
+        }
       });
+
       renderPlayers();
       updateCounters();
     }
@@ -262,6 +277,14 @@
         });
         const resData = await res.json();
         if (resData.status === "success") {
+          // Aggiorna la memoria locale dell'app per rispecchiare il salvataggio immediato
+          const colKey = String(selectedCol);
+          if (!appData.attendanceMap) appData.attendanceMap = {};
+          if (!appData.attendanceMap[colKey]) appData.attendanceMap[colKey] = {};
+          records.forEach(r => {
+            appData.attendanceMap[colKey][r.row] = r.status;
+          });
+
           alert("✅ Presenze salvate correttamente!");
         } else {
           alert("Errore: " + resData.message);
@@ -304,7 +327,7 @@
         });
         const resData = await res.json();
         if (resData.status === "success") {
-          alert(`✅ Nuova data inserita in ordine cronologico!`);
+          alert("✅ Nuova data inserita in ordine cronologico!");
           closeAddEventModal();
           await loadTeamData();
         } else {
