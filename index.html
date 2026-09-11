@@ -2,102 +2,154 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Cresole 80 - Presenze</title>
-  <meta name="theme-color" content="#4338ca">
+  <meta name="theme-color" content="#3730a3">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { -webkit-tap-highlight-color: transparent; }
+    body {
+      -webkit-tap-highlight-color: transparent;
+      padding-bottom: env(safe-area-inset-bottom, 24px);
+    }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans pb-32">
+<body class="bg-slate-50 text-slate-900 font-sans antialiased pb-28">
 
-  <!-- HEADER FISSO -->
-  <header class="sticky top-0 z-30 bg-indigo-700 text-white shadow-md p-4 flex justify-between items-center">
-    <div>
-      <h1 class="text-base font-bold tracking-tight">S.S. Cresole 80</h1>
-      <p id="subHeader" class="text-xs text-indigo-200">Caricamento in corso...</p>
+  <!-- HEADER ELEGANTE E COMPATTO -->
+  <header class="sticky top-0 z-30 bg-indigo-800/95 backdrop-blur-md text-white shadow-sm border-b border-indigo-900 px-4 py-3">
+    <div class="max-w-md mx-auto flex items-center justify-between">
+      <div>
+        <div class="flex items-center gap-1.5">
+          <span class="text-sm font-extrabold tracking-tight">S.S. Cresole 80</span>
+          <span class="bg-indigo-600 text-[10px] font-bold px-1.5 py-0.5 rounded text-indigo-100">Presenze</span>
+        </div>
+        <p id="subHeader" class="text-[11px] text-indigo-200 mt-0.5">Caricamento...</p>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <button onclick="openPlayerModal()" class="bg-indigo-700/80 active:bg-indigo-600 text-white text-[11px] font-bold py-1.5 px-2.5 rounded-lg border border-indigo-500/40 shadow-sm transition">
+          ➕ Atleta
+        </button>
+        <button onclick="openAddEventModal()" class="bg-indigo-600 active:bg-indigo-500 text-white text-[11px] font-bold py-1.5 px-2.5 rounded-lg border border-indigo-400/40 shadow-sm transition">
+          ➕ Data
+        </button>
+      </div>
     </div>
-    <button onclick="openAddEventModal()" class="bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white text-xs font-semibold py-2 px-3 rounded-lg shadow transition flex items-center gap-1">
-      <span>➕ Data</span>
-    </button>
   </header>
 
-  <main class="max-w-md mx-auto p-4 space-y-3">
+  <main class="max-w-md mx-auto p-3.5 space-y-3">
 
-    <!-- SELETTORE SQUADRA E DATA -->
-    <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 space-y-2.5">
-      <div>
-        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Squadra / Categoria</label>
-        <select id="teamSelect" onchange="onTeamChange()" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500">
-          <option value="Presenze_Esordienti2">Esordienti 2° Anno</option>
-          <option value="Presenze_Pulcini2">Pulcini 2° Anno</option>
-          <option value="Presenze_Pulcini1">Pulcini 1° Anno</option>
-          <option value="Presenze_Primi_Calci">Primi Calci</option>
-          <option value="Presenze_Piccoli_Amici2">Piccoli Amici 2° Anno</option>
-          <option value="Presenze_Piccoli_Amici1">Piccoli Amici 1° Anno</option>
-          <option value="Presenze_Allenatori">Staff / Allenatori</option>
-        </select>
+    <!-- SELEZIONE CATEGORIA E DATA -->
+    <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200/80 space-y-2.5">
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Squadra</label>
+          <select id="teamSelect" onchange="onTeamChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="Presenze_Esordienti2">Esordienti 2° Anno</option>
+            <option value="Presenze_Pulcini2">Pulcini 2° Anno</option>
+            <option value="Presenze_Pulcini1">Pulcini 1° Anno</option>
+            <option value="Presenze_Primi_Calci">Primi Calci</option>
+            <option value="Presenze_Piccoli_Amici2">Piccoli Amici 2° Anno</option>
+            <option value="Presenze_Piccoli_Amici1">Piccoli Amici 1° Anno</option>
+            <option value="Presenze_Allenatori">Staff / Allenatori</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Seduta</label>
+          <select id="eventSelect" onchange="onEventChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="">Caricamento...</option>
+          </select>
+        </div>
       </div>
 
-      <div>
-        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Seduta / Partita</label>
-        <select id="eventSelect" onchange="onEventChange()" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500">
-          <option value="">Caricamento date...</option>
-        </select>
+      <!-- OPZIONE METEO PIOGGIA -->
+      <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+        <div class="flex items-center gap-1.5">
+          <span class="text-base">🌧️</span>
+          <label for="checkRain" class="text-xs font-bold text-slate-700 select-none cursor-pointer">Meteo Pioggia</label>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="checkRain" onchange="toggleRain()" class="sr-only peer">
+          <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-slate-600"></div>
+        </label>
       </div>
     </div>
 
-    <!-- RIEPILOGO RAPIDO -->
-    <div class="grid grid-cols-2 gap-2 text-center text-xs font-semibold">
-      <div class="bg-emerald-50 text-emerald-800 p-2 rounded-xl border border-emerald-200">
-        Presenti: <span id="countPresenti" class="text-sm font-bold ml-1">0</span>
+    <!-- STATISTICHE RAPIDE CONTAGIRI -->
+    <div class="grid grid-cols-4 gap-1.5 text-center text-xs font-bold">
+      <div class="bg-emerald-50 text-emerald-800 py-1.5 px-1 rounded-xl border border-emerald-200/80">
+        P: <span id="countPresenti" class="text-emerald-900 font-extrabold">0</span>
       </div>
-      <div class="bg-rose-50 text-rose-800 p-2 rounded-xl border border-rose-200">
-        Assenti: <span id="countAssenti" class="text-sm font-bold ml-1">0</span>
+      <div class="bg-rose-50 text-rose-800 py-1.5 px-1 rounded-xl border border-rose-200/80">
+        A: <span id="countAssenti" class="text-rose-900 font-extrabold">0</span>
+      </div>
+      <div class="bg-amber-50 text-amber-800 py-1.5 px-1 rounded-xl border border-amber-200/80">
+        G: <span id="countGiustificati" class="text-amber-900 font-extrabold">0</span>
+      </div>
+      <div class="bg-purple-50 text-purple-800 py-1.5 px-1 rounded-xl border border-purple-200/80">
+        I: <span id="countInfortunati" class="text-purple-900 font-extrabold">0</span>
       </div>
     </div>
 
-    <!-- LISTA RAGAZZI -->
-    <div id="playerList" class="space-y-2">
+    <!-- LISTA DEI RAGAZZI -->
+    <div id="playerList" class="space-y-1.5">
       <!-- Generato dinamicamente via JS -->
     </div>
   </main>
 
-  <!-- FOOTER FISSO SALVATAGGIO -->
-  <div class="fixed bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur border-t border-slate-200 z-20">
-    <div class="max-w-md mx-auto flex gap-2">
-      <button onclick="markAllPresent()" class="w-1/3 bg-slate-200 active:bg-slate-300 text-slate-700 font-bold py-3 rounded-xl text-xs transition">
-        Tutti P
-      </button>
-      <button onclick="saveAttendance()" id="btnSave" class="w-2/3 bg-indigo-600 active:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg flex items-center justify-center gap-1.5 text-xs transition">
-        <span>💾 Salva Presenze</span>
+  <!-- BARRA DI SALVATAGGIO IN BASSO FISSA -->
+  <div class="fixed bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t border-slate-200 z-20 shadow-lg">
+    <div class="max-w-md mx-auto">
+      <button onclick="saveAttendance()" id="btnSave" class="w-full bg-indigo-700 active:bg-indigo-800 text-white font-extrabold py-3.5 rounded-2xl shadow flex items-center justify-center gap-2 text-xs tracking-wide transition">
+        <span>💾 SALVA PRESENZE</span>
       </button>
     </div>
   </div>
 
-  <!-- MODAL INSERIMENTO DATA EXTRA -->
-  <div id="modalEvent" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
-      <h3 class="text-sm font-bold text-slate-800">Aggiungi Data / Evento</h3>
+  <!-- MODAL: AGGIUNGI GIOCATORE -->
+  <div id="modalPlayer" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-slate-800">Nuovo Atleta</h3>
+        <button onclick="closePlayerModal()" class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Cognome e Nome</label>
+        <input type="text" id="newPlayerName" placeholder="es. Rossi Marco" class="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none">
+      </div>
+      <div class="flex gap-2 pt-1">
+        <button onclick="closePlayerModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-2.5 rounded-xl text-xs font-bold">Annulla</button>
+        <button onclick="confirmAddPlayer()" id="btnConfirmPlayer" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl text-xs font-bold shadow">Aggiungi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AGGIUNGI EVENTO -->
+  <div id="modalEvent" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-slate-800">Aggiungi Data / Seduta</h3>
+        <button onclick="closeAddEventModal()" class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
+      </div>
       <div class="space-y-3">
         <div>
-          <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Data</label>
-          <input type="date" id="newEventDate" class="w-full border border-slate-300 rounded-xl p-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Data</label>
+          <input type="date" id="newEventDate" class="w-full border border-slate-300 rounded-xl p-2 text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none">
         </div>
         <div>
-          <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Tipo Evento</label>
-          <select id="newEventType" class="w-full border border-slate-300 rounded-xl p-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tipo Evento</label>
+          <select id="newEventType" class="w-full border border-slate-300 rounded-xl p-2 text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none">
             <option value="Allenamento">Allenamento</option>
             <option value="Amichevole">Amichevole</option>
-            <option value="Campionato">Partita di Campionato</option>
+            <option value="Campionato">Partita Campionato</option>
             <option value="Torneo">Torneo</option>
             <option value="Ritiro">Ritiro</option>
           </select>
         </div>
       </div>
       <div class="flex gap-2 pt-1">
-        <button onclick="closeAddEventModal()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 py-2.5 rounded-xl text-xs font-semibold">Annulla</button>
+        <button onclick="closeAddEventModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-2.5 rounded-xl text-xs font-bold">Annulla</button>
         <button onclick="confirmAddEvent()" id="btnConfirmEvent" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl text-xs font-bold shadow">Aggiungi</button>
       </div>
     </div>
@@ -109,6 +161,7 @@
     let currentTeam = "Presenze_Esordienti2";
     let appData = { players: [], events: [], attendanceMap: {} };
     let currentAttendance = {};
+    let isRainActive = false;
 
     async function init() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -131,8 +184,8 @@
     }
 
     async function loadTeamData() {
-      document.getElementById('subHeader').innerText = "Caricamento squadra...";
-      document.getElementById('playerList').innerHTML = `<div class="text-center py-8 text-xs text-slate-400">Caricamento elenco...</div>`;
+      document.getElementById('subHeader').innerText = "Sincronizzazione...";
+      document.getElementById('playerList').innerHTML = `<div class="text-center py-8 text-xs text-slate-400">Caricamento rosa...</div>`;
 
       try {
         const res = await fetch(`${API_URL}?team=${encodeURIComponent(currentTeam)}`);
@@ -141,13 +194,13 @@
         if (data.status === "success") {
           appData = data;
           if (!appData.attendanceMap) appData.attendanceMap = {};
-          document.getElementById('subHeader').innerText = `${appData.players.length} Atleti in elenco`;
+          document.getElementById('subHeader').innerText = `${appData.players.length} Atleti in rosa`;
           populateEvents();
         } else {
-          alert("Errore caricamento dati: " + data.message);
+          alert("Errore: " + data.message);
         }
       } catch (err) {
-        alert("Impossibile connettersi al Google Sheet.");
+        alert("Errore durante il recupero dei dati dal foglio.");
       }
     }
 
@@ -161,7 +214,7 @@
       select.innerHTML = "";
 
       if (!appData.events || appData.events.length === 0) {
-        select.innerHTML = `<option value="">Nessun evento presente (clicca '➕ Data')</option>`;
+        select.innerHTML = `<option value="">Nessun evento presente</option>`;
         document.getElementById('playerList').innerHTML = "";
         return;
       }
@@ -169,11 +222,11 @@
       appData.events.forEach(ev => {
         const opt = document.createElement('option');
         opt.value = String(ev.col);
-        opt.innerText = `${ev.date} - ${ev.type}`;
+        const rainIcon = ev.isRain ? "🌧️ " : "";
+        opt.innerText = `${rainIcon}${ev.date} - ${ev.type}`;
         select.appendChild(opt);
       });
 
-      // Seleziona l'ultimo evento
       select.selectedIndex = appData.events.length - 1;
       onEventChange();
     }
@@ -185,7 +238,12 @@
 
       if (!selectedCol) return;
 
-      // Recupera le presenze già archiviate per questa colonna
+      // Meteo pioggia per questa seduta
+      const currentEv = appData.events.find(ev => String(ev.col) === selectedCol);
+      isRainActive = currentEv ? Boolean(currentEv.isRain) : false;
+      document.getElementById('checkRain').checked = isRainActive;
+
+      // Presenze archiviate
       const savedForDate = (appData.attendanceMap && (appData.attendanceMap[selectedCol] || appData.attendanceMap[parseInt(selectedCol)]))
         ? (appData.attendanceMap[selectedCol] || appData.attendanceMap[parseInt(selectedCol)])
         : {};
@@ -203,27 +261,42 @@
       updateCounters();
     }
 
+    function toggleRain() {
+      isRainActive = document.getElementById('checkRain').checked;
+      const select = document.getElementById('eventSelect');
+      const selectedCol = String(select.value);
+      const ev = appData.events.find(e => String(e.col) === selectedCol);
+      if (ev) {
+        ev.isRain = isRainActive;
+        const opt = select.options[select.selectedIndex];
+        if (opt) {
+          const rainIcon = isRainActive ? "🌧️ " : "";
+          opt.innerText = `${rainIcon}${ev.date} - ${ev.type}`;
+        }
+      }
+    }
+
     function renderPlayers() {
       const list = document.getElementById('playerList');
       list.innerHTML = "";
 
       if (appData.players.length === 0) {
-        list.innerHTML = `<div class="text-center py-6 text-xs text-slate-400">Nessun giocatore trovato in questa scheda.</div>`;
+        list.innerHTML = `<div class="text-center py-6 text-xs text-slate-400">Nessun giocatore registrato. Clicca '+ Atleta' per aggiungerne uno.</div>`;
         return;
       }
 
       appData.players.forEach(p => {
         const status = currentAttendance[p.row] || "Presente";
         const div = document.createElement('div');
-        div.className = "bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between";
+        div.className = "bg-white px-3 py-2.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between";
         
         div.innerHTML = `
-          <div class="font-medium text-slate-800 text-xs truncate mr-2">${p.name}</div>
+          <div class="font-bold text-slate-800 text-xs tracking-tight truncate mr-2">${p.name}</div>
           <div class="flex gap-1">
-            <button onclick="setStatus(${p.row}, 'Presente')" class="w-7 h-7 rounded-lg text-xs font-bold transition flex items-center justify-center ${status === 'Presente' ? 'bg-emerald-600 text-white shadow' : 'bg-slate-100 text-slate-600'}">P</button>
-            <button onclick="setStatus(${p.row}, 'Assente')" class="w-7 h-7 rounded-lg text-xs font-bold transition flex items-center justify-center ${status === 'Assente' ? 'bg-rose-600 text-white shadow' : 'bg-slate-100 text-slate-600'}">A</button>
-            <button onclick="setStatus(${p.row}, 'Giustificato')" class="w-7 h-7 rounded-lg text-xs font-bold transition flex items-center justify-center ${status === 'Giustificato' ? 'bg-amber-500 text-white shadow' : 'bg-slate-100 text-slate-600'}">G</button>
-            <button onclick="setStatus(${p.row}, 'Infortunato')" class="w-7 h-7 rounded-lg text-xs font-bold transition flex items-center justify-center ${status === 'Infortunato' ? 'bg-purple-600 text-white shadow' : 'bg-slate-100 text-slate-600'}">I</button>
+            <button onclick="setStatus(${p.row}, 'Presente')" class="w-8 h-8 rounded-xl text-xs font-black transition flex items-center justify-center ${status === 'Presente' ? 'bg-emerald-600 text-white shadow' : 'bg-slate-100 text-slate-500 active:bg-slate-200'}">P</button>
+            <button onclick="setStatus(${p.row}, 'Assente')" class="w-8 h-8 rounded-xl text-xs font-black transition flex items-center justify-center ${status === 'Assente' ? 'bg-rose-600 text-white shadow' : 'bg-slate-100 text-slate-500 active:bg-slate-200'}">A</button>
+            <button onclick="setStatus(${p.row}, 'Giustificato')" class="w-8 h-8 rounded-xl text-xs font-black transition flex items-center justify-center ${status === 'Giustificato' ? 'bg-amber-500 text-white shadow' : 'bg-slate-100 text-slate-500 active:bg-slate-200'}">G</button>
+            <button onclick="setStatus(${p.row}, 'Infortunato')" class="w-8 h-8 rounded-xl text-xs font-black transition flex items-center justify-center ${status === 'Infortunato' ? 'bg-purple-600 text-white shadow' : 'bg-slate-100 text-slate-500 active:bg-slate-200'}">I</button>
           </div>
         `;
         list.appendChild(div);
@@ -236,20 +309,18 @@
       updateCounters();
     }
 
-    function markAllPresent() {
-      appData.players.forEach(p => currentAttendance[p.row] = "Presente");
-      renderPlayers();
-      updateCounters();
-    }
-
     function updateCounters() {
-      let pCount = 0, aCount = 0;
+      let p = 0, a = 0, g = 0, i = 0;
       Object.values(currentAttendance).forEach(st => {
-        if (st === "Presente") pCount++;
-        else if (st === "Assente") aCount++;
+        if (st === "Presente") p++;
+        else if (st === "Assente") a++;
+        else if (st === "Giustificato") g++;
+        else if (st === "Infortunato") i++;
       });
-      document.getElementById('countPresenti').innerText = pCount;
-      document.getElementById('countAssenti').innerText = aCount;
+      document.getElementById('countPresenti').innerText = p;
+      document.getElementById('countAssenti').innerText = a;
+      document.getElementById('countGiustificati').innerText = g;
+      document.getElementById('countInfortunati').innerText = i;
     }
 
     async function saveAttendance() {
@@ -258,7 +329,7 @@
 
       const btn = document.getElementById('btnSave');
       btn.disabled = true;
-      btn.innerText = "Salvataggio...";
+      btn.innerText = "Salvataggio in corso...";
 
       const records = Object.keys(currentAttendance).map(row => ({
         row: parseInt(row),
@@ -272,40 +343,75 @@
             action: "saveAttendance",
             team: currentTeam,
             col: selectedCol,
+            isRain: isRainActive,
             records: records
           })
         });
         const resData = await res.json();
         if (resData.status === "success") {
-          // Aggiorna la memoria locale dell'app per rispecchiare il salvataggio immediato
           const colKey = String(selectedCol);
           if (!appData.attendanceMap) appData.attendanceMap = {};
           if (!appData.attendanceMap[colKey]) appData.attendanceMap[colKey] = {};
           records.forEach(r => {
             appData.attendanceMap[colKey][r.row] = r.status;
           });
-
-          alert("✅ Presenze salvate correttamente!");
+          alert("✅ Presenze e meteo aggiornati con successo!");
         } else {
           alert("Errore: " + resData.message);
         }
       } catch (err) {
-        alert("Errore di rete durante il salvataggio.");
+        alert("Errore durante il salvataggio.");
       } finally {
         btn.disabled = false;
-        btn.innerHTML = "<span>💾 Salva Presenze</span>";
+        btn.innerHTML = "<span>💾 SALVA PRESENZE</span>";
       }
     }
 
+    // GESTIONE NUOVO GIOCATORE
+    function openPlayerModal() {
+      document.getElementById('newPlayerName').value = "";
+      document.getElementById('modalPlayer').classList.remove('hidden');
+    }
+    function closePlayerModal() {
+      document.getElementById('modalPlayer').classList.add('hidden');
+    }
+    async function confirmAddPlayer() {
+      const name = document.getElementById('newPlayerName').value.trim();
+      if (!name) return alert("Inserisci il cognome e nome dell'atleta");
+
+      const btn = document.getElementById('btnConfirmPlayer');
+      btn.disabled = true;
+      btn.innerText = "Inserimento...";
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "addPlayer", team: currentTeam, name: name })
+        });
+        const resData = await res.json();
+        if (resData.status === "success") {
+          alert(`✅ ${name} aggiunto con successo alla squadra!`);
+          closePlayerModal();
+          await loadTeamData();
+        } else {
+          alert("Errore: " + resData.message);
+        }
+      } catch (err) {
+        alert("Errore di rete nell'aggiunta del giocatore.");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Aggiungi";
+      }
+    }
+
+    // GESTIONE NUOVA DATA
     function openAddEventModal() {
       document.getElementById('newEventDate').valueAsDate = new Date();
       document.getElementById('modalEvent').classList.remove('hidden');
     }
-
     function closeAddEventModal() {
       document.getElementById('modalEvent').classList.add('hidden');
     }
-
     async function confirmAddEvent() {
       const dateVal = document.getElementById('newEventDate').value;
       const typeVal = document.getElementById('newEventType').value;
@@ -334,7 +440,7 @@
           alert("Errore: " + resData.message);
         }
       } catch (err) {
-        alert("Errore durante l'inserimento della data.");
+        alert("Errore di rete nell'aggiunta dell'evento.");
       } finally {
         btn.disabled = false;
         btn.innerText = "Aggiungi";
