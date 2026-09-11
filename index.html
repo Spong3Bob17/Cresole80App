@@ -27,7 +27,7 @@
 </head>
 <body class="bg-slate-100 text-slate-900 font-sans antialiased">
 
-  <!-- OVERLAY SPINNER DI CARICAMENTO -->
+  <!-- OVERLAY SPINNER DI CARICAMENTO (BLOCCA L'INTERFACCIA) -->
   <div id="loadingOverlay" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex flex-col items-center justify-center gap-3 transition-opacity">
     <div class="w-12 h-12 border-4 border-indigo-400/30 border-t-indigo-500 rounded-full animate-spin"></div>
     <div class="text-center">
@@ -36,7 +36,7 @@
     </div>
   </div>
 
-  <!-- HEADER CON SELETTORE SQUADRE ALLINEATO ALLE SCHEDE REALI -->
+  <!-- HEADER ELEGANTE CON SELETTORE SQUADRA INTEGRATO -->
   <header class="sticky top-0 z-30 bg-indigo-950 text-white shadow-md border-b border-indigo-900/60 safe-top px-4 pb-3">
     <div class="max-w-md mx-auto space-y-2">
       <div class="flex items-center justify-between">
@@ -58,7 +58,7 @@
         </button>
       </div>
 
-      <!-- SELETTORE SQUADRA -->
+      <!-- SELETTORE SQUADRA NELLA NAVBAR TOP -->
       <div class="relative">
         <select id="teamSelect" onchange="onTeamChange()" class="w-full bg-indigo-900/90 border border-indigo-700/80 rounded-xl px-3 py-2 text-xs font-extrabold text-white appearance-none outline-none focus:ring-2 focus:ring-indigo-400">
           <option value="Presenze_Esordienti2">Esordienti 2° Anno</option>
@@ -77,7 +77,7 @@
     </div>
   </header>
 
-  <!-- MENU LATERALE (DRAWER) -->
+  <!-- MENU LATERALE A SCOMPARSA (DRAWER) -->
   <div id="drawerOverlay" onclick="toggleMenu()" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 hidden transition-opacity"></div>
   <aside id="drawerMenu" class="fixed top-0 right-0 bottom-0 w-72 bg-white z-50 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col safe-top safe-bottom p-5">
     <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
@@ -120,7 +120,7 @@
     </div>
 
     <div class="text-[10px] text-slate-400 text-center pt-3 border-t border-slate-100">
-      Cresole 80 App • v2.2
+      Cresole 80 App • v2.3
     </div>
   </aside>
 
@@ -151,7 +151,7 @@
       </div>
     </div>
 
-    <!-- STATISTICHE RAPIDE -->
+    <!-- STATISTICHE CONTATORI -->
     <div class="grid grid-cols-4 gap-1.5 text-center text-xs font-bold">
       <div class="bg-white py-2 px-1 rounded-xl border border-slate-200/80 shadow-xs">
         <span class="text-[9px] text-slate-400 uppercase block font-semibold">Presenti</span>
@@ -258,7 +258,6 @@
       let targetTeam = teamQuery || savedTeam || "Presenze_Esordienti2";
       if (!targetTeam.startsWith("Presenze_")) targetTeam = "Presenze_" + targetTeam;
 
-      // Normalizzazione se qualcuno aveva memorizzato "Presenze_Piccoli_Amici1" o "2"
       if (targetTeam === "Presenze_Piccoli_Amici1" || targetTeam === "Presenze_Piccoli_Amici2") {
         targetTeam = "Presenze_Piccoli_Amici";
       }
@@ -324,12 +323,10 @@
       loadTeamData();
     }
 
-    // Funzione di utilità per convertire le date DD/MM/YYYY o DD-MM-YYYY in oggetto Date
     function parseCustomDate(dateStr) {
       if (!dateStr) return null;
       const parts = dateStr.split(/[-/]/);
       if (parts.length === 3) {
-        // Formato DD/MM/YYYY
         return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
       }
       return new Date(dateStr);
@@ -353,7 +350,7 @@
         select.appendChild(opt);
       });
 
-      // --- LOGICA SELEZIONE DATA DI DEFAULT ---
+      // SELEZIONE DATA PREDEFINITA: OGGI OPPURE ULTIMA PASSATA
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -368,12 +365,9 @@
           evDate.setHours(0, 0, 0, 0);
           const diff = today.getTime() - evDate.getTime();
 
-          // 1. Corrispondenza esatta con oggi
           if (diff === 0) {
             exactTodayIndex = idx;
-          }
-          // 2. Data passata o uguale ad oggi: cerchiamo quella più vicina
-          else if (diff > 0 && diff < closestPastDiff) {
+          } else if (diff > 0 && diff < closestPastDiff) {
             closestPastDiff = diff;
             closestPastIndex = idx;
           }
@@ -385,7 +379,6 @@
       } else if (closestPastIndex !== -1) {
         targetIndex = closestPastIndex;
       } else {
-        // Se tutte le date sono nel futuro, seleziona la prima disponibile
         targetIndex = 0;
       }
 
@@ -413,7 +406,7 @@
         if (previousValue && ["Presente", "Assente", "Giustificato", "Infortunato"].includes(previousValue)) {
           currentAttendance[p.row] = previousValue;
         } else {
-          currentAttendance[p.row] = "Presente";
+          currentAttendance[p.row] = ""; // Di default vuoto se non salvato
         }
       });
 
@@ -436,6 +429,23 @@
       }
     }
 
+    function setStatus(row, status) {
+      // Toggle: se riclicchi lo stesso stato, torna vuoto
+      if (currentAttendance[row] === status) {
+        currentAttendance[row] = "";
+      } else {
+        currentAttendance[row] = status;
+      }
+      renderPlayers();
+      updateCounters();
+    }
+
+    function clearStatus(row) {
+      currentAttendance[row] = "";
+      renderPlayers();
+      updateCounters();
+    }
+
     function renderPlayers() {
       const list = document.getElementById('playerList');
       list.innerHTML = "";
@@ -446,27 +456,24 @@
       }
 
       appData.players.forEach(p => {
-        const status = currentAttendance[p.row] || "Presente";
+        const status = currentAttendance[p.row] || "";
         const div = document.createElement('div');
         div.className = "bg-white px-3 py-2 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between";
         
         div.innerHTML = `
-          <div class="font-bold text-slate-800 text-xs tracking-tight truncate mr-2">${p.name}</div>
-          <div class="flex gap-1">
-            <button onclick="setStatus(${p.row}, 'Presente')" class="w-8 h-8 rounded-xl text-xs font-black transition flex items-center justify-center ${status === 'Presente' ? 'bg-emerald-600 text-white shadow' : 'bg-slate-100 text-slate-500 active:bg-slate-200'}">P</button>
-            <button onclick="setStatus(${p.row}, 'Assente')" class="w-8 h-8 rounded-xl text-xs font-black transition flex items-center justify-center ${status === 'Assente' ? 'bg-rose-600 text-white shadow' : 'bg-slate-100 text-slate-500 active:bg-slate-200'}">A</button>
-            <button onclick="setStatus(${p.row}, 'Giustificato')" class="w-8 h-8 rounded-xl text-xs font-black transition flex items-center justify-center ${status === 'Giustificato' ? 'bg-amber-500 text-white shadow' : 'bg-slate-100 text-slate-500 active:bg-slate-200'}">G</button>
-            <button onclick="setStatus(${p.row}, 'Infortunato')" class="w-8 h-8 rounded-xl text-xs font-black transition flex items-center justify-center ${status === 'Infortunato' ? 'bg-purple-600 text-white shadow' : 'bg-slate-100 text-slate-500 active:bg-slate-200'}">I</button>
+          <div class="font-bold text-xs tracking-tight truncate mr-2 ${status === '' ? 'text-slate-400 font-medium' : 'text-slate-800 font-bold'}">
+            ${p.name}
+          </div>
+          <div class="flex gap-1 items-center">
+            <button onclick="setStatus(${p.row}, 'Presente')" class="w-7 h-7 rounded-xl text-xs font-black transition flex items-center justify-center ${status === 'Presente' ? 'bg-emerald-600 text-white shadow' : 'bg-slate-100 text-slate-500 active:bg-slate-200'}">P</button>
+            <button onclick="setStatus(${p.row}, 'Assente')" class="w-7 h-7 rounded-xl text-xs font-black transition flex items-center justify-center ${status === 'Assente' ? 'bg-rose-600 text-white shadow' : 'bg-slate-100 text-slate-500 active:bg-slate-200'}">A</button>
+            <button onclick="setStatus(${p.row}, 'Giustificato')" class="w-7 h-7 rounded-xl text-xs font-black transition flex items-center justify-center ${status === 'Giustificato' ? 'bg-amber-500 text-white shadow' : 'bg-slate-100 text-slate-500 active:bg-slate-200'}">G</button>
+            <button onclick="setStatus(${p.row}, 'Infortunato')" class="w-7 h-7 rounded-xl text-xs font-black transition flex items-center justify-center ${status === 'Infortunato' ? 'bg-purple-600 text-white shadow' : 'bg-slate-100 text-slate-500 active:bg-slate-200'}">I</button>
+            <button onclick="clearStatus(${p.row})" title="Svuota / Non convocato" class="w-6 h-7 rounded-lg text-xs font-bold transition flex items-center justify-center ${status === '' ? 'text-slate-300' : 'text-slate-400 hover:text-rose-500 active:scale-95'}">✕</button>
           </div>
         `;
         list.appendChild(div);
       });
-    }
-
-    function setStatus(row, status) {
-      currentAttendance[row] = status;
-      renderPlayers();
-      updateCounters();
     }
 
     function updateCounters() {
@@ -547,7 +554,7 @@
         if (resData.status === "success") {
           if (resData.newPlayer) {
             appData.players.push(resData.newPlayer);
-            currentAttendance[resData.newPlayer.row] = "Presente";
+            currentAttendance[resData.newPlayer.row] = "";
             renderPlayers();
             updateCounters();
             document.getElementById('subHeader').innerText = `${appData.players.length} Atleti in rosa`;
