@@ -487,7 +487,7 @@
       if (!name) return alert("Inserisci cognome e nome dell'atleta");
 
       closePlayerModal();
-      showLoading(`Aggiunta ${name} in corso...`);
+      showLoading(`Aggiunta ${name}...`);
 
       try {
         const res = await fetch(API_URL, {
@@ -496,14 +496,22 @@
         });
         const resData = await res.json();
         if (resData.status === "success") {
-          alert(`✅ ${name} aggiunto con successo!`);
-          await loadTeamData();
+          // Inserimento istantaneo senza attendere il refresh completo
+          if (resData.newPlayer) {
+            appData.players.push(resData.newPlayer);
+            currentAttendance[resData.newPlayer.row] = "Presente";
+            renderPlayers();
+            updateCounters();
+            document.getElementById('subHeader').innerText = `${appData.players.length} Atleti in rosa`;
+          } else {
+            await loadTeamData();
+          }
         } else {
           alert("Errore: " + resData.message);
-          hideLoading();
         }
       } catch (err) {
         alert("Errore durante l'operazione.");
+      } finally {
         hideLoading();
       }
     }
@@ -521,7 +529,7 @@
       if (!dateVal) return alert("Inserisci una data valida");
 
       closeAddEventModal();
-      showLoading("Inserimento seduta in ordine...");
+      showLoading("Inserimento seduta...");
 
       try {
         const res = await fetch(API_URL, {
@@ -535,14 +543,17 @@
         });
         const resData = await res.json();
         if (resData.status === "success") {
-          alert("✅ Nuova data inserita in ordine cronologico!");
+          // Ricarica rapida e posizionamento automatico sulla nuova seduta
           await loadTeamData();
+          const select = document.getElementById('eventSelect');
+          select.selectedIndex = select.options.length - 1;
+          onEventChange();
         } else {
           alert("Errore: " + resData.message);
-          hideLoading();
         }
       } catch (err) {
         alert("Errore durante l'inserimento.");
+      } finally {
         hideLoading();
       }
     }
