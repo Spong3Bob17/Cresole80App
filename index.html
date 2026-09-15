@@ -81,8 +81,8 @@
   <div id="loadingOverlay" class="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex flex-col items-center justify-center gap-3 transition-opacity">
     <div class="w-12 h-12 border-4 border-indigo-400/30 border-t-indigo-500 rounded-full animate-spin"></div>
     <div class="text-center">
-      <p id="loadingMessage" class="text-white text-xs font-black tracking-wide uppercase">Caricamento...</p>
-      <p class="text-indigo-200 text-[10px] mt-0.5 font-medium">Sincronizzazione rapida attiva</p>
+      <p id="loadingMessage" class="text-white text-xs font-black tracking-wide uppercase">Caricamento rapido...</p>
+      <p class="text-indigo-200 text-[10px] mt-0.5 font-medium">Sincronizzazione in corso</p>
     </div>
   </div>
 
@@ -170,7 +170,6 @@
         <button onclick="clearCurrentTempoFormation(); toggleMenu();" class="w-full text-left bg-rose-50 hover:bg-rose-100 text-rose-800 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2.5 transition border border-rose-200">
           <span>🗑️</span> Svuota Formazione Tempo
         </button>
-        <p class="text-[9px] text-slate-400 px-1">I prestiti sono validi solo per questa partita e non compaiono nella rosa presenze.</p>
       </div>
 
       <div id="drawerToolsStatistiche" class="hidden space-y-2">
@@ -181,7 +180,7 @@
     </div>
 
     <div class="text-[10px] text-slate-400 text-center pt-3 border-t border-slate-100 mt-auto">
-      Cresole 80 App • Suite v3.5
+      Cresole 80 App • Suite v3.6
     </div>
   </aside>
 
@@ -259,7 +258,6 @@
       </div>
 
       <div id="formationContainer" class="space-y-3">
-        <!-- 4 TEMPI CON TASTO SVUOTA RAPIDO -->
         <div class="flex items-center gap-1.5 bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-xs">
           <div class="grid grid-cols-4 gap-1 flex-1">
             <button onclick="selectTempo('tempo1')" id="btnTempo1" class="py-2 rounded-xl text-xs font-black transition bg-indigo-700 text-white shadow">1° T</button>
@@ -272,7 +270,6 @@
           </button>
         </div>
 
-        <!-- CAMPETTO -->
         <div class="pitch-container min-h-[350px] w-full p-2.5 flex flex-col justify-between select-none">
           <div class="pitch-box-top"></div>
           <div class="pitch-line-half"></div>
@@ -282,7 +279,6 @@
           <div id="pitchSlotsContainer" class="relative z-10 w-full h-full flex flex-col justify-between min-h-[330px]"></div>
         </div>
 
-        <!-- CALCI PIAZZATI -->
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2.5">
           <div class="flex items-center justify-between">
             <h3 class="text-xs font-black text-slate-800 flex items-center gap-1.5">
@@ -319,7 +315,6 @@
           </div>
         </div>
 
-        <!-- PANCHINA -->
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
           <h3 class="text-xs font-black text-slate-800 flex items-center gap-1.5">
             <span>🪑</span> Panchina (<span id="countBench" class="text-indigo-600 font-bold">0</span>)
@@ -339,15 +334,15 @@
   </div>
 
   <!-- ========================================================= -->
-  <!-- SEZIONE 3: STATISTICHE IBRIDE (SETTIMANALI + TOTALI) -->
+  <!-- SEZIONE 3: STATISTICHE IBRIDE (SETTIMANALI + TOTALI STAGIONALI) -->
   <!-- ========================================================= -->
   <div id="viewStatistiche" class="hidden">
     <main class="max-w-md mx-auto p-3.5 space-y-3.5">
       
-      <!-- CONTROLLO SETTIMANA -->
+      <!-- SETTIMANA ATTUALE -->
       <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2.5">
         <div class="flex items-center justify-between">
-          <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Riepilogo Settimanale</span>
+          <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Presenze Settimanali</span>
           <div class="flex gap-1">
             <button onclick="changeStatsWeek(-1)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-black text-slate-700">◀</button>
             <button onclick="resetStatsWeekToCurrent()" class="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-[11px] font-extrabold">Oggi</button>
@@ -355,17 +350,16 @@
           </div>
         </div>
         <div class="text-xs font-black text-slate-800" id="statsWeekLabel">Caricamento...</div>
-        
         <div id="weeklyStatsContainer" class="space-y-1.5 pt-1"></div>
       </div>
 
-      <!-- TABELLA GENERALE ATLETI -->
+      <!-- TOTALI GENERALI DI TUTTA LA STAGIONE (DALLE FORMULE DEL FOGLIO) -->
       <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2.5">
         <div class="flex items-center justify-between">
-          <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Rendimento Generale Rosa</h3>
+          <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Rendimento Totale Stagione</h3>
           <span class="text-[10px] text-slate-400 font-bold" id="statsGeneralCount">0 Atleti</span>
         </div>
-        <p class="text-[10px] text-slate-400 leading-tight">Il conteggio esclude le sedute non valutate (vuote).</p>
+        <p class="text-[10px] text-slate-400 leading-tight">Dati calcolati su tutte le sedute registrate nel foglio (esclusi i vuoti).</p>
         
         <div id="generalStatsList" class="space-y-2 pt-1"></div>
       </div>
@@ -373,7 +367,7 @@
     </main>
   </div>
 
-  <!-- MODAL: ASSEGNAZIONE GIOCATORE AL RUOLO -->
+  <!-- MODAL ASSEGNAZIONE GIOCATORE -->
   <div id="modalAssignPlayer" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-100">
       <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
@@ -392,7 +386,7 @@
     </div>
   </div>
 
-  <!-- MODAL: AGGIUNGI ATLETA IN ROSA -->
+  <!-- MODAL AGGIUNGI ATLETA -->
   <div id="modalPlayer" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-100">
       <div class="flex items-center justify-between">
@@ -410,7 +404,7 @@
     </div>
   </div>
 
-  <!-- MODAL: AGGIUNGI PRESTITO TEMPORANEO -->
+  <!-- MODAL AGGIUNGI PRESTITO -->
   <div id="modalGuestPlayer" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-100">
       <div class="flex items-center justify-between">
@@ -431,7 +425,7 @@
     </div>
   </div>
 
-  <!-- MODAL: AGGIUNGI EVENTO -->
+  <!-- MODAL AGGIUNGI EVENTO -->
   <div id="modalEvent" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-100">
       <div class="flex items-center justify-between">
@@ -465,13 +459,12 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbw6lVaMmUsEj4ruFW_Y4otStD_erh4mPRMMkpXUFy0CKa9BsfJ1giBedJb0yl0Hy4yBEg/exec";
 
     let currentTeam = "Esordienti2";
-    let appData = { players: [], events: [], attendanceMap: {}, lineups: {} };
+    let currentModule = "presenze";
+    let appData = { players: [], events: [], attendanceMap: {} };
     let currentAttendance = {};
     let isRainActive = false;
-    let isHistoryFull = false;
 
     let statsWeekOffset = 0;
-
     let currentActiveTempo = "tempo1";
     let currentAssignSlot = null;
     let guestPlayers = [];
@@ -510,7 +503,8 @@
       }
 
       updateDrawerTeamTitle();
-      await loadTeamData();
+      // Caricamento iniziale modulare (solo presenze)
+      await loadModuleData();
     }
 
     function updateDrawerTeamTitle() {
@@ -531,7 +525,9 @@
       }
     }
 
-    function switchView(viewName) {
+    // CAMBIO VISTA CON LAZY LOADING IMMEDIATO
+    async function switchView(viewName) {
+      currentModule = viewName;
       const viewPres = document.getElementById('viewPresenze');
       const viewForm = document.getElementById('viewFormazioni');
       const viewStat = document.getElementById('viewStatistiche');
@@ -553,81 +549,74 @@
         navForm.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900";
         title.innerText = "Formazioni";
         toolsForm.classList.remove('hidden');
+        await loadModuleData();
         renderPitch();
       } else if (viewName === 'statistiche') {
         viewStat.classList.remove('hidden');
         navStat.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900";
         title.innerText = "Statistiche";
         toolsStat.classList.remove('hidden');
+        await loadModuleData();
         renderHybridStatistics();
       } else {
         viewPres.classList.remove('hidden');
         navPres.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900";
         title.innerText = "Presenze";
         toolsPres.classList.remove('hidden');
+        await loadModuleData();
       }
     }
 
-    // CARICAMENTO CON ROLLING WINDOW ±5gg O STORICO
-    async function loadTeamData(fullHistory = false) {
-      showLoading(fullHistory ? "Caricamento storico completo..." : "Sincronizzazione ±5gg...");
+    // CARICAMENTO SEPARATO (CHIEDE SOLO I DATI DELLA SCHEDA CORRENTE + TIMESTAMP ANTI-CACHE)
+    async function loadModuleData(fullHistory = false) {
+      showLoading(currentModule === "formazioni" ? "Caricamento campetto..." : "Sincronizzazione...");
       try {
-        const url = `${API_URL}?team=${encodeURIComponent(currentTeam)}${fullHistory ? '&allHistory=true' : ''}`;
+        const antiCache = Date.now();
+        const url = `${API_URL}?team=${encodeURIComponent(currentTeam)}&mode=${currentModule}${fullHistory ? '&allHistory=true' : ''}&_t=${antiCache}`;
         const res = await fetch(url, { method: "GET", mode: "cors" });
         if (!res.ok) throw new Error(`HTTP: ${res.status}`);
         const data = await res.json();
 
         if (data.status === "success") {
-          appData = data;
-          if (!appData.attendanceMap) appData.attendanceMap = {};
-          
-          if (data.lineups && data.lineups.default) {
-            matchLineups = data.lineups.default;
-            guestPlayers = matchLineups.prestiti || [];
+          if (currentModule === "formazioni") {
+            if (data.lineups) {
+              matchLineups = data.lineups;
+              guestPlayers = matchLineups.prestiti || [];
+            }
+            renderPitch();
           } else {
-            resetLineupStructure();
+            appData = data;
+            if (!appData.attendanceMap) appData.attendanceMap = {};
+            populateEvents();
+            if (currentModule === "statistiche") {
+              renderHybridStatistics();
+            }
           }
-
-          populateEvents();
-          renderPitch();
         } else {
           alert("Attenzione: " + data.message);
         }
       } catch (err) {
-        alert("Errore di caricamento dal foglio.");
+        alert("Errore caricamento.");
       } finally {
         hideLoading();
       }
     }
 
     function loadAllHistoryEvents() {
-      isHistoryFull = true;
       document.getElementById('btnAllHistory').innerText = "Storico completo attivo";
-      loadTeamData(true);
-    }
-
-    function resetLineupStructure() {
-      guestPlayers = [];
-      matchLineups = {
-        tempo1: { titolari: {}, piazzati: {} },
-        tempo2: { titolari: {}, piazzati: {} },
-        tempo3: { titolari: {}, piazzati: {} },
-        tempo4: { titolari: {}, piazzati: {} },
-        prestiti: []
-      };
+      loadModuleData(true);
     }
 
     function onTeamChange() {
       currentTeam = document.getElementById('teamSelect').value;
       localStorage.setItem('cresole80_selected_team', currentTeam);
       updateDrawerTeamTitle();
-      isHistoryFull = false;
       document.getElementById('btnAllHistory').innerText = "Carica tutto lo storico";
-      loadTeamData();
+      loadModuleData();
     }
 
     // =========================================================
-    // MODULO STATISTICHE IBRIDE (SETTIMANALI + TOTALI)
+    // STATISTICHE (SETTIMANALI + TOTALI GENERALI STORICI)
     // =========================================================
     function getStartAndEndOfWeek(date) {
       const d = new Date(date);
@@ -656,14 +645,15 @@
     function renderHybridStatistics() {
       document.getElementById('statsGeneralCount').innerText = `${appData.players.length} Atleti in rosa`;
 
+      // 1. Settimana corrente / selezionata
       const now = new Date();
       now.setDate(now.getDate() + (statsWeekOffset * 7));
       const { monday, sunday } = getStartAndEndOfWeek(now);
 
       const formatShort = dt => `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth()+1).padStart(2, '0')}`;
-      document.getElementById('statsWeekLabel').innerText = `Settimana: Lunedì ${formatShort(monday)} - Domenica ${formatShort(sunday)}`;
+      document.getElementById('statsWeekLabel').innerText = `Settimana: ${formatShort(monday)} - ${formatShort(sunday)}`;
 
-      const weekEvents = appData.events.filter(ev => {
+      const weekEvents = (appData.events || []).filter(ev => {
         const d = parseCustomDate(ev.date);
         return d && d >= monday && d <= sunday;
       });
@@ -672,7 +662,7 @@
       weeklyContainer.innerHTML = "";
 
       if (weekEvents.length === 0) {
-        weeklyContainer.innerHTML = `<div class="text-center py-3 text-xs text-slate-400 italic">Nessun evento in questa settimana.</div>`;
+        weeklyContainer.innerHTML = `<div class="text-center py-3 text-xs text-slate-400 italic">Nessuna seduta in questa settimana.</div>`;
       } else {
         const daysRow = document.createElement('div');
         daysRow.className = "flex justify-between items-center text-[9px] font-black uppercase text-slate-400 pb-1 border-b border-slate-100";
@@ -704,29 +694,19 @@
         });
       }
 
+      // 2. Rendimento Generale di Tutta la Stagione (preso direttamente da Google Sheets)
       const generalList = document.getElementById('generalStatsList');
       generalList.innerHTML = "";
 
-      if (appData.players.length === 0 || !appData.events || appData.events.length === 0) {
-        generalList.innerHTML = `<div class="text-center py-4 text-xs text-slate-400">Nessun dato statistico disponibile.</div>`;
+      if (appData.players.length === 0) {
+        generalList.innerHTML = `<div class="text-center py-4 text-xs text-slate-400">Nessun atleta registrato.</div>`;
         return;
       }
 
       appData.players.forEach(p => {
-        let pCount = 0, aCount = 0, gCount = 0, iCount = 0;
-        let totalValutati = 0;
-
-        appData.events.forEach(ev => {
-          const statusMap = appData.attendanceMap[String(ev.col)] || {};
-          const status = statusMap[String(p.row)];
-
-          if (status === "Presente") { pCount++; totalValutati++; }
-          else if (status === "Assente") { aCount++; totalValutati++; }
-          else if (status === "Giustificato") { gCount++; totalValutati++; }
-          else if (status === "Infortunato") { iCount++; totalValutati++; }
-        });
-
-        const perc = totalValutati > 0 ? Math.round((pCount / totalValutati) * 100) : 0;
+        const stats = p.statsGlobal || { p: 0, a: 0, g: 0, i: 0 };
+        const totalValutati = stats.p + stats.a + stats.g + stats.i;
+        const perc = totalValutati > 0 ? Math.round((stats.p / totalValutati) * 100) : 0;
         const colorBar = perc >= 75 ? 'bg-emerald-500' : perc >= 50 ? 'bg-amber-500' : 'bg-rose-500';
 
         const card = document.createElement('div');
@@ -735,7 +715,7 @@
           <div class="flex items-center justify-between">
             <div>
               <h4 class="text-xs font-black text-slate-800">${p.name}</h4>
-              <span class="text-[10px] text-slate-500 font-bold">${pCount} presenze su ${totalValutati} valutati</span>
+              <span class="text-[10px] text-slate-500 font-bold">${stats.p} presenze su ${totalValutati} valutati</span>
             </div>
             <span class="text-xs font-black ${perc >= 75 ? 'text-emerald-600' : perc >= 50 ? 'text-amber-600' : 'text-rose-600'}">${perc}%</span>
           </div>
@@ -745,10 +725,10 @@
           </div>
 
           <div class="flex gap-1.5 pt-0.5 text-[9px] font-extrabold text-slate-700">
-            <span class="bg-white px-1.5 py-0.5 rounded border border-slate-200">🟢 P: ${pCount}</span>
-            <span class="bg-white px-1.5 py-0.5 rounded border border-slate-200">🔴 A: ${aCount}</span>
-            <span class="bg-white px-1.5 py-0.5 rounded border border-slate-200">🟡 G: ${gCount}</span>
-            <span class="bg-white px-1.5 py-0.5 rounded border border-slate-200">🟣 I: ${iCount}</span>
+            <span class="bg-white px-1.5 py-0.5 rounded border border-slate-200">🟢 P: ${stats.p}</span>
+            <span class="bg-white px-1.5 py-0.5 rounded border border-slate-200">🔴 A: ${stats.a}</span>
+            <span class="bg-white px-1.5 py-0.5 rounded border border-slate-200">🟡 G: ${stats.g}</span>
+            <span class="bg-white px-1.5 py-0.5 rounded border border-slate-200">🟣 I: ${stats.i}</span>
           </div>
         `;
         generalList.appendChild(card);
@@ -756,16 +736,12 @@
     }
 
     function exportStatsSummary() {
-      let text = `📊 RIEPILOGO PRESENZE - ${currentTeam}\n\n`;
+      let text = `📊 RIEPILOGO STAGIONALE - ${currentTeam}\n\n`;
       appData.players.forEach(p => {
-        let pCount = 0, tot = 0;
-        appData.events.forEach(ev => {
-          const st = (appData.attendanceMap[String(ev.col)] || {})[String(p.row)];
-          if (st === "Presente") { pCount++; tot++; }
-          else if (["Assente", "Giustificato", "Infortunato"].includes(st)) { tot++; }
-        });
-        const perc = tot > 0 ? Math.round((pCount / tot) * 100) : 0;
-        text += `• ${p.name}: ${perc}% (${pCount}/${tot})\n`;
+        const stats = p.statsGlobal || { p: 0, a: 0, g: 0, i: 0 };
+        const tot = stats.p + stats.a + stats.g + stats.i;
+        const perc = tot > 0 ? Math.round((stats.p / tot) * 100) : 0;
+        text += `• ${p.name}: ${perc}% (${stats.p}/${tot})\n`;
       });
 
       if (navigator.clipboard) {
@@ -777,7 +753,7 @@
     }
 
     // =========================================================
-    // MODULI TATTICI & GRAFICA DEL CAMPO
+    // MODULI TATTICI & CAMPETTO (CON RESET RAPIDO)
     // =========================================================
     function getTacticalFormationConfig() {
       if (currentTeam.includes("Esordienti")) {
@@ -838,7 +814,7 @@
     }
 
     function clearCurrentTempoFormation() {
-      if (confirm(`Svuotare tutti i ruoli e i calci piazzati del ${currentActiveTempo.replace('tempo', '')}° Tempo?`)) {
+      if (confirm(`Vuoi svuotare la formazione e i piazzati del ${currentActiveTempo.replace('tempo', '')}° Tempo?`)) {
         matchLineups[currentActiveTempo] = { titolari: {}, piazzati: {} };
         renderPitch();
       }
@@ -913,7 +889,7 @@
 
       updateSetpieceDropdownsFiltered(inCampo, activeData.piazzati || {});
 
-      const allAvailable = appData.players.map(p => p.name).concat(guestPlayers);
+      const allAvailable = (appData.players || []).map(p => p.name).concat(guestPlayers);
       const benchContainer = document.getElementById('benchList');
       benchContainer.innerHTML = "";
       const panchinari = allAvailable.filter(name => !inCampo.includes(name));
@@ -965,7 +941,7 @@
       const activeTitolari = matchLineups[currentActiveTempo].titolari || {};
       const alreadyPlaying = Object.values(activeTitolari);
 
-      const allEligible = appData.players.map(p => ({ name: p.name, isGuest: false }))
+      const allEligible = (appData.players || []).map(p => ({ name: p.name, isGuest: false }))
         .concat(guestPlayers.map(g => ({ name: g, isGuest: true })));
 
       allEligible.forEach(item => {
@@ -1021,7 +997,6 @@
       matchLineups[currentActiveTempo].piazzati[type] = val;
     }
 
-    // SALVATAGGIO CON GESTIONE CORS RESILIENTE
     async function saveLineupToServer() {
       showLoading("Salvataggio Formazione sul Foglio...");
       try {
@@ -1039,12 +1014,12 @@
         });
         const resData = await res.json();
         if (resData.status === "success") {
-          alert("✅ Formazione e campetti aggiornati convalidati sul foglio!");
+          alert("✅ Formazione e campetti aggiornati sul foglio!");
         } else {
           alert("Errore: " + resData.message);
         }
       } catch (err) {
-        alert("Errore di rete o salvataggio non riuscito.");
+        alert("Errore durante il salvataggio.");
       } finally {
         hideLoading();
       }
@@ -1061,7 +1036,7 @@
 
     function confirmAddGuestPlayer() {
       const name = document.getElementById('guestPlayerName').value.trim();
-      if (!name) return alert("Inserisci il nome del ragazzo aggregato");
+      if (!name) return alert("Inserisci il nome del ragazzo");
 
       if (!guestPlayers.includes(name)) {
         guestPlayers.push(name);
@@ -1072,7 +1047,7 @@
     }
 
     // =========================================================
-    // PRESENZE (ESISTENTE)
+    // GESTIONE PRESENZE
     // =========================================================
     function parseCustomDate(dateStr) {
       if (!dateStr) return null;
@@ -1188,7 +1163,7 @@
       const list = document.getElementById('playerList');
       list.innerHTML = "";
 
-      if (appData.players.length === 0) {
+      if (!appData.players || appData.players.length === 0) {
         list.innerHTML = `<div class="text-center py-6 text-xs text-slate-400">Nessun atleta registrato. Clicca il menu in alto per aggiungerne uno.</div>`;
         return;
       }
@@ -1280,7 +1255,7 @@
     }
     async function confirmAddPlayer() {
       const name = document.getElementById('newPlayerName').value.trim();
-      if (!name) return alert("Inserisci cognome e nome dell'atleta");
+      if (!name) return alert("Inserisci cognome e nome");
 
       closePlayerModal();
       showLoading(`Aggiunta ${name}...`);
@@ -1294,20 +1269,13 @@
         });
         const resData = await res.json();
         if (resData.status === "success") {
-          if (resData.newPlayer) {
-            appData.players.push(resData.newPlayer);
-            currentAttendance[resData.newPlayer.row] = "";
-            renderPlayers();
-            updateCounters();
-          } else {
-            await loadTeamData();
-          }
+          await loadModuleData();
           alert(`✅ ${name} aggiunto con successo!`);
         } else {
           alert("Errore: " + resData.message);
         }
       } catch (err) {
-        alert("Errore durante l'operazione.");
+        alert("Errore operazione.");
       } finally {
         hideLoading();
       }
@@ -1326,7 +1294,7 @@
       if (!dateVal) return alert("Inserisci una data valida");
 
       closeAddEventModal();
-      showLoading("Inserimento seduta in ordine...");
+      showLoading("Inserimento seduta...");
 
       try {
         const res = await fetch(API_URL, {
@@ -1342,13 +1310,13 @@
         });
         const resData = await res.json();
         if (resData.status === "success") {
-          alert("✅ Nuova data inserita in ordine cronologico!");
-          await loadTeamData();
+          alert("✅ Nuova data inserita in ordine!");
+          await loadModuleData();
         } else {
           alert("Errore: " + resData.message);
         }
       } catch (err) {
-        alert("Errore durante l'inserimento.");
+        alert("Errore inserimento.");
       } finally {
         hideLoading();
       }
