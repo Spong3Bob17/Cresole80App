@@ -95,7 +95,7 @@
             ⚽
           </div>
           <div>
-            <h1 class="text-xs font-black tracking-tight text-white leading-tight">Cresole 80</h1>
+            <h1 class="text-xs font-black tracking-tight text-white leading-tight">S.S. Cresole 80</h1>
             <p id="activeModuleTitle" class="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">Presenze</p>
           </div>
         </div>
@@ -150,11 +150,10 @@
       </button>
     </div>
 
-    <!-- STRUMENTI CONTESTUALI (CAMBIANO IN BASE ALLA SCHEDA ATTIVA) -->
+    <!-- STRUMENTI CONTESTUALI -->
     <div class="space-y-2 mb-6">
       <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Strumenti Attivi</div>
       
-      <!-- Strumenti Presenze -->
       <div id="drawerToolsPresenze" class="space-y-2">
         <button onclick="openPlayerModal(); toggleMenu();" class="w-full text-left bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-2.5 transition border border-slate-200">
           <span>➕</span> Nuovo Atleta in Rosa
@@ -164,17 +163,25 @@
         </button>
       </div>
 
-      <!-- Strumenti Formazioni -->
       <div id="drawerToolsFormazioni" class="hidden space-y-2">
         <button onclick="openGuestPlayerModal(); toggleMenu();" class="w-full text-left bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2.5 transition border border-emerald-200">
           <span>🧒</span> Aggiungi Prestito / Aggregato
         </button>
-        <p class="text-[9px] text-slate-400 px-1">Aggiunge un ragazzo solo per questa partita, senza inserirlo nella rosa presenze.</p>
+        <button onclick="clearCurrentTempoFormation(); toggleMenu();" class="w-full text-left bg-rose-50 hover:bg-rose-100 text-rose-800 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2.5 transition border border-rose-200">
+          <span>🗑️</span> Svuota Formazione Tempo
+        </button>
+        <p class="text-[9px] text-slate-400 px-1">I prestiti sono validi solo per questa partita e non compaiono nella rosa presenze.</p>
+      </div>
+
+      <div id="drawerToolsStatistiche" class="hidden space-y-2">
+        <button onclick="exportStatsSummary(); toggleMenu();" class="w-full text-left bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-2.5 transition border border-indigo-200">
+          <span>📤</span> Copia Riepilogo Testo
+        </button>
       </div>
     </div>
 
     <div class="text-[10px] text-slate-400 text-center pt-3 border-t border-slate-100 mt-auto">
-      Cresole 80 App • Suite v3.3
+      Cresole 80 App • Suite v3.5
     </div>
   </aside>
 
@@ -186,7 +193,7 @@
       <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 space-y-2.5">
         <div>
           <div class="flex items-center justify-between mb-1">
-            <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Seduta / Evento</label>
+            <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Seduta (Finestra ±5gg)</label>
             <button onclick="loadAllHistoryEvents()" id="btnAllHistory" class="text-[10px] font-bold text-indigo-600 hover:underline">Carica tutto lo storico</button>
           </div>
           <select id="eventSelect" onchange="onEventChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
@@ -252,15 +259,20 @@
       </div>
 
       <div id="formationContainer" class="space-y-3">
-        <!-- 4 TEMPI COMPATTI -->
-        <div class="grid grid-cols-4 gap-1.5 bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-xs">
-          <button onclick="selectTempo('tempo1')" id="btnTempo1" class="py-2 rounded-xl text-xs font-black transition bg-indigo-700 text-white shadow">1° Tempo</button>
-          <button onclick="selectTempo('tempo2')" id="btnTempo2" class="py-2 rounded-xl text-xs font-bold transition text-slate-600 bg-slate-100 hover:bg-slate-200">2° Tempo</button>
-          <button onclick="selectTempo('tempo3')" id="btnTempo3" class="py-2 rounded-xl text-xs font-bold transition text-slate-600 bg-slate-100 hover:bg-slate-200">3° Tempo</button>
-          <button onclick="selectTempo('tempo4')" id="btnTempo4" class="py-2 rounded-xl text-xs font-bold transition text-slate-600 bg-slate-100 hover:bg-slate-200">4° Tempo</button>
+        <!-- 4 TEMPI CON TASTO SVUOTA RAPIDO -->
+        <div class="flex items-center gap-1.5 bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-xs">
+          <div class="grid grid-cols-4 gap-1 flex-1">
+            <button onclick="selectTempo('tempo1')" id="btnTempo1" class="py-2 rounded-xl text-xs font-black transition bg-indigo-700 text-white shadow">1° T</button>
+            <button onclick="selectTempo('tempo2')" id="btnTempo2" class="py-2 rounded-xl text-xs font-bold transition text-slate-600 bg-slate-100 hover:bg-slate-200">2° T</button>
+            <button onclick="selectTempo('tempo3')" id="btnTempo3" class="py-2 rounded-xl text-xs font-bold transition text-slate-600 bg-slate-100 hover:bg-slate-200">3° T</button>
+            <button onclick="selectTempo('tempo4')" id="btnTempo4" class="py-2 rounded-xl text-xs font-bold transition text-slate-600 bg-slate-100 hover:bg-slate-200">4° T</button>
+          </div>
+          <button onclick="clearCurrentTempoFormation()" title="Svuota questo tempo" class="px-2.5 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-xl text-xs font-bold border border-rose-200 transition">
+            🗑️
+          </button>
         </div>
 
-        <!-- CAMPETTO PULITO SENZA TESTI SUPERFLUI -->
+        <!-- CAMPETTO -->
         <div class="pitch-container min-h-[350px] w-full p-2.5 flex flex-col justify-between select-none">
           <div class="pitch-box-top"></div>
           <div class="pitch-line-half"></div>
@@ -270,7 +282,7 @@
           <div id="pitchSlotsContainer" class="relative z-10 w-full h-full flex flex-col justify-between min-h-[330px]"></div>
         </div>
 
-        <!-- CALCI PIAZZATI (SOLO CON I GIOCATORI IN CAMPO) -->
+        <!-- CALCI PIAZZATI -->
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2.5">
           <div class="flex items-center justify-between">
             <h3 class="text-xs font-black text-slate-800 flex items-center gap-1.5">
@@ -307,7 +319,7 @@
           </div>
         </div>
 
-        <!-- PANCHINA AUTOMATICA -->
+        <!-- PANCHINA -->
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
           <h3 class="text-xs font-black text-slate-800 flex items-center gap-1.5">
             <span>🪑</span> Panchina (<span id="countBench" class="text-indigo-600 font-bold">0</span>)
@@ -327,16 +339,37 @@
   </div>
 
   <!-- ========================================================= -->
-  <!-- SEZIONE 3: STATISTICHE ATLETI -->
+  <!-- SEZIONE 3: STATISTICHE IBRIDE (SETTIMANALI + TOTALI) -->
   <!-- ========================================================= -->
   <div id="viewStatistiche" class="hidden">
-    <main class="max-w-md mx-auto p-3.5 space-y-3">
-      <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
-        <h2 class="text-xs font-black text-slate-800 uppercase tracking-wider">Rendimento Presenze Rosa</h2>
-        <p class="text-[10px] text-slate-400">Le percentuali escludono le sedute non valutate (vuote).</p>
+    <main class="max-w-md mx-auto p-3.5 space-y-3.5">
+      
+      <!-- CONTROLLO SETTIMANA -->
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Riepilogo Settimanale</span>
+          <div class="flex gap-1">
+            <button onclick="changeStatsWeek(-1)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-black text-slate-700">◀</button>
+            <button onclick="resetStatsWeekToCurrent()" class="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-[11px] font-extrabold">Oggi</button>
+            <button onclick="changeStatsWeek(1)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-black text-slate-700">▶</button>
+          </div>
+        </div>
+        <div class="text-xs font-black text-slate-800" id="statsWeekLabel">Caricamento...</div>
+        
+        <div id="weeklyStatsContainer" class="space-y-1.5 pt-1"></div>
       </div>
 
-      <div id="statsList" class="space-y-2"></div>
+      <!-- TABELLA GENERALE ATLETI -->
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2.5">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Rendimento Generale Rosa</h3>
+          <span class="text-[10px] text-slate-400 font-bold" id="statsGeneralCount">0 Atleti</span>
+        </div>
+        <p class="text-[10px] text-slate-400 leading-tight">Il conteggio esclude le sedute non valutate (vuote).</p>
+        
+        <div id="generalStatsList" class="space-y-2 pt-1"></div>
+      </div>
+
     </main>
   </div>
 
@@ -359,7 +392,7 @@
     </div>
   </div>
 
-  <!-- MODAL: AGGIUNGI ATLETA IN ROSA (PERMANENTE) -->
+  <!-- MODAL: AGGIUNGI ATLETA IN ROSA -->
   <div id="modalPlayer" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-100">
       <div class="flex items-center justify-between">
@@ -377,7 +410,7 @@
     </div>
   </div>
 
-  <!-- MODAL: AGGIUNGI PRESTITO TEMPORANEO (SOLO PER QUESTA PARTITA) -->
+  <!-- MODAL: AGGIUNGI PRESTITO TEMPORANEO -->
   <div id="modalGuestPlayer" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-100">
       <div class="flex items-center justify-between">
@@ -437,9 +470,11 @@
     let isRainActive = false;
     let isHistoryFull = false;
 
+    let statsWeekOffset = 0;
+
     let currentActiveTempo = "tempo1";
     let currentAssignSlot = null;
-    let guestPlayers = []; // Atleti in prestito/temporanei
+    let guestPlayers = [];
     let matchLineups = {
       tempo1: { titolari: {}, piazzati: {} },
       tempo2: { titolari: {}, piazzati: {} },
@@ -496,7 +531,6 @@
       }
     }
 
-    // CAMBIO VISTA E AGGIORNAMENTO DINAMICO DEGLI STRUMENTI DEL DRAWER
     function switchView(viewName) {
       const viewPres = document.getElementById('viewPresenze');
       const viewForm = document.getElementById('viewFormazioni');
@@ -508,40 +542,38 @@
 
       const toolsPres = document.getElementById('drawerToolsPresenze');
       const toolsForm = document.getElementById('drawerToolsFormazioni');
+      const toolsStat = document.getElementById('drawerToolsStatistiche');
 
-      // Reset classi
       [viewPres, viewForm, viewStat].forEach(v => v.classList.add('hidden'));
       [navPres, navForm, navStat].forEach(n => n.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition text-slate-600 hover:bg-slate-100");
+      [toolsPres, toolsForm, toolsStat].forEach(t => t.classList.add('hidden'));
 
       if (viewName === 'formazioni') {
         viewForm.classList.remove('hidden');
         navForm.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900";
         title.innerText = "Formazioni";
-        toolsPres.classList.add('hidden');
         toolsForm.classList.remove('hidden');
         renderPitch();
       } else if (viewName === 'statistiche') {
         viewStat.classList.remove('hidden');
         navStat.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900";
         title.innerText = "Statistiche";
-        toolsPres.classList.remove('hidden');
-        toolsForm.classList.add('hidden');
-        renderStatistics();
+        toolsStat.classList.remove('hidden');
+        renderHybridStatistics();
       } else {
         viewPres.classList.remove('hidden');
         navPres.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900";
         title.innerText = "Presenze";
         toolsPres.classList.remove('hidden');
-        toolsForm.classList.add('hidden');
       }
     }
 
-    // CARICAMENTO CON ROLLING WINDOW (VELOCE) O STORICO COMPLETO
+    // CARICAMENTO CON ROLLING WINDOW ±5gg O STORICO
     async function loadTeamData(fullHistory = false) {
-      showLoading(fullHistory ? "Caricamento storico completo..." : "Sincronizzazione...");
+      showLoading(fullHistory ? "Caricamento storico completo..." : "Sincronizzazione ±5gg...");
       try {
         const url = `${API_URL}?team=${encodeURIComponent(currentTeam)}${fullHistory ? '&allHistory=true' : ''}`;
-        const res = await fetch(url);
+        const res = await fetch(url, { method: "GET", mode: "cors" });
         if (!res.ok) throw new Error(`HTTP: ${res.status}`);
         const data = await res.json();
 
@@ -562,7 +594,7 @@
           alert("Attenzione: " + data.message);
         }
       } catch (err) {
-        alert("Impossibile caricare i dati.");
+        alert("Errore di caricamento dal foglio.");
       } finally {
         hideLoading();
       }
@@ -592,6 +624,156 @@
       isHistoryFull = false;
       document.getElementById('btnAllHistory').innerText = "Carica tutto lo storico";
       loadTeamData();
+    }
+
+    // =========================================================
+    // MODULO STATISTICHE IBRIDE (SETTIMANALI + TOTALI)
+    // =========================================================
+    function getStartAndEndOfWeek(date) {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(d.setDate(diff));
+      monday.setHours(0, 0, 0, 0);
+
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      sunday.setHours(23, 59, 59, 999);
+
+      return { monday, sunday };
+    }
+
+    function changeStatsWeek(delta) {
+      statsWeekOffset += delta;
+      renderHybridStatistics();
+    }
+
+    function resetStatsWeekToCurrent() {
+      statsWeekOffset = 0;
+      renderHybridStatistics();
+    }
+
+    function renderHybridStatistics() {
+      document.getElementById('statsGeneralCount').innerText = `${appData.players.length} Atleti in rosa`;
+
+      const now = new Date();
+      now.setDate(now.getDate() + (statsWeekOffset * 7));
+      const { monday, sunday } = getStartAndEndOfWeek(now);
+
+      const formatShort = dt => `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth()+1).padStart(2, '0')}`;
+      document.getElementById('statsWeekLabel').innerText = `Settimana: Lunedì ${formatShort(monday)} - Domenica ${formatShort(sunday)}`;
+
+      const weekEvents = appData.events.filter(ev => {
+        const d = parseCustomDate(ev.date);
+        return d && d >= monday && d <= sunday;
+      });
+
+      const weeklyContainer = document.getElementById('weeklyStatsContainer');
+      weeklyContainer.innerHTML = "";
+
+      if (weekEvents.length === 0) {
+        weeklyContainer.innerHTML = `<div class="text-center py-3 text-xs text-slate-400 italic">Nessun evento in questa settimana.</div>`;
+      } else {
+        const daysRow = document.createElement('div');
+        daysRow.className = "flex justify-between items-center text-[9px] font-black uppercase text-slate-400 pb-1 border-b border-slate-100";
+        daysRow.innerHTML = `<span class="w-28 truncate">Atleta</span><div class="flex gap-1">` + 
+          weekEvents.map(ev => `<span class="w-11 text-center truncate">${ev.date.split('/')[0]}/${ev.date.split('/')[1]}</span>`).join('') + 
+          `</div>`;
+        weeklyContainer.appendChild(daysRow);
+
+        appData.players.forEach(p => {
+          const rowDiv = document.createElement('div');
+          rowDiv.className = "flex justify-between items-center py-1 border-b border-slate-50 text-xs";
+          
+          let badgesHtml = "";
+          weekEvents.forEach(ev => {
+            const st = (appData.attendanceMap[String(ev.col)] || {})[String(p.row)] || "";
+            let badge = `<span class="w-11 text-center py-0.5 rounded text-[10px] font-bold text-slate-300">-</span>`;
+            if (st === "Presente") badge = `<span class="w-11 text-center py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800">P</span>`;
+            else if (st === "Assente") badge = `<span class="w-11 text-center py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800">A</span>`;
+            else if (st === "Giustificato") badge = `<span class="w-11 text-center py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-800">G</span>`;
+            else if (st === "Infortunato") badge = `<span class="w-11 text-center py-0.5 rounded text-[10px] font-black bg-purple-100 text-purple-800">I</span>`;
+            badgesHtml += badge;
+          });
+
+          rowDiv.innerHTML = `
+            <span class="font-bold text-slate-800 text-[11px] truncate w-28">${p.name}</span>
+            <div class="flex gap-1">${badgesHtml}</div>
+          `;
+          weeklyContainer.appendChild(rowDiv);
+        });
+      }
+
+      const generalList = document.getElementById('generalStatsList');
+      generalList.innerHTML = "";
+
+      if (appData.players.length === 0 || !appData.events || appData.events.length === 0) {
+        generalList.innerHTML = `<div class="text-center py-4 text-xs text-slate-400">Nessun dato statistico disponibile.</div>`;
+        return;
+      }
+
+      appData.players.forEach(p => {
+        let pCount = 0, aCount = 0, gCount = 0, iCount = 0;
+        let totalValutati = 0;
+
+        appData.events.forEach(ev => {
+          const statusMap = appData.attendanceMap[String(ev.col)] || {};
+          const status = statusMap[String(p.row)];
+
+          if (status === "Presente") { pCount++; totalValutati++; }
+          else if (status === "Assente") { aCount++; totalValutati++; }
+          else if (status === "Giustificato") { gCount++; totalValutati++; }
+          else if (status === "Infortunato") { iCount++; totalValutati++; }
+        });
+
+        const perc = totalValutati > 0 ? Math.round((pCount / totalValutati) * 100) : 0;
+        const colorBar = perc >= 75 ? 'bg-emerald-500' : perc >= 50 ? 'bg-amber-500' : 'bg-rose-500';
+
+        const card = document.createElement('div');
+        card.className = "bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 space-y-1.5";
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-xs font-black text-slate-800">${p.name}</h4>
+              <span class="text-[10px] text-slate-500 font-bold">${pCount} presenze su ${totalValutati} valutati</span>
+            </div>
+            <span class="text-xs font-black ${perc >= 75 ? 'text-emerald-600' : perc >= 50 ? 'text-amber-600' : 'text-rose-600'}">${perc}%</span>
+          </div>
+          
+          <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+            <div class="${colorBar} h-1.5 rounded-full transition-all" style="width: ${perc}%"></div>
+          </div>
+
+          <div class="flex gap-1.5 pt-0.5 text-[9px] font-extrabold text-slate-700">
+            <span class="bg-white px-1.5 py-0.5 rounded border border-slate-200">🟢 P: ${pCount}</span>
+            <span class="bg-white px-1.5 py-0.5 rounded border border-slate-200">🔴 A: ${aCount}</span>
+            <span class="bg-white px-1.5 py-0.5 rounded border border-slate-200">🟡 G: ${gCount}</span>
+            <span class="bg-white px-1.5 py-0.5 rounded border border-slate-200">🟣 I: ${iCount}</span>
+          </div>
+        `;
+        generalList.appendChild(card);
+      });
+    }
+
+    function exportStatsSummary() {
+      let text = `📊 RIEPILOGO PRESENZE - ${currentTeam}\n\n`;
+      appData.players.forEach(p => {
+        let pCount = 0, tot = 0;
+        appData.events.forEach(ev => {
+          const st = (appData.attendanceMap[String(ev.col)] || {})[String(p.row)];
+          if (st === "Presente") { pCount++; tot++; }
+          else if (["Assente", "Giustificato", "Infortunato"].includes(st)) { tot++; }
+        });
+        const perc = tot > 0 ? Math.round((pCount / tot) * 100) : 0;
+        text += `• ${p.name}: ${perc}% (${pCount}/${tot})\n`;
+      });
+
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text);
+        alert("✅ Riepilogo copiato negli appunti per WhatsApp!");
+      } else {
+        alert(text);
+      }
     }
 
     // =========================================================
@@ -653,6 +835,13 @@
       });
       document.getElementById('labelTempoPiazzati').innerText = t.replace('tempo', '') + "° Tempo";
       renderPitch();
+    }
+
+    function clearCurrentTempoFormation() {
+      if (confirm(`Svuotare tutti i ruoli e i calci piazzati del ${currentActiveTempo.replace('tempo', '')}° Tempo?`)) {
+        matchLineups[currentActiveTempo] = { titolari: {}, piazzati: {} };
+        renderPitch();
+      }
     }
 
     function formatPlayerSplitName(fullName) {
@@ -724,7 +913,6 @@
 
       updateSetpieceDropdownsFiltered(inCampo, activeData.piazzati || {});
 
-      // Panchina: unione rosa ufficiale + prestiti temporanei
       const allAvailable = appData.players.map(p => p.name).concat(guestPlayers);
       const benchContainer = document.getElementById('benchList');
       benchContainer.innerHTML = "";
@@ -833,12 +1021,15 @@
       matchLineups[currentActiveTempo].piazzati[type] = val;
     }
 
+    // SALVATAGGIO CON GESTIONE CORS RESILIENTE
     async function saveLineupToServer() {
       showLoading("Salvataggio Formazione sul Foglio...");
       try {
         matchLineups.prestiti = guestPlayers;
         const res = await fetch(API_URL, {
           method: "POST",
+          mode: "cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({
             action: "saveLineup",
             team: currentTeam,
@@ -853,15 +1044,12 @@
           alert("Errore: " + resData.message);
         }
       } catch (err) {
-        alert("Errore durante il salvataggio.");
+        alert("Errore di rete o salvataggio non riuscito.");
       } finally {
         hideLoading();
       }
     }
 
-    // =========================================================
-    // PRESTITI TEMPORANEI (NON AGGIUNTI AL FOGLIO PRESENZE)
-    // =========================================================
     function openGuestPlayerModal() {
       document.getElementById('guestPlayerName').value = "";
       document.getElementById('modalGuestPlayer').classList.remove('hidden');
@@ -884,62 +1072,7 @@
     }
 
     // =========================================================
-    // MODULO STATISTICHE ATLETI
-    // =========================================================
-    function renderStatistics() {
-      const list = document.getElementById('statsList');
-      list.innerHTML = "";
-
-      if (appData.players.length === 0 || !appData.events || appData.events.length === 0) {
-        list.innerHTML = `<div class="text-center py-8 text-xs text-slate-400">Dati insufficienti per il calcolo delle statistiche.</div>`;
-        return;
-      }
-
-      appData.players.forEach(p => {
-        let pCount = 0, aCount = 0, gCount = 0, iCount = 0;
-        let totalValutati = 0;
-
-        appData.events.forEach(ev => {
-          const statusMap = appData.attendanceMap[String(ev.col)] || {};
-          const status = statusMap[String(p.row)];
-
-          if (status === "Presente") { pCount++; totalValutati++; }
-          else if (status === "Assente") { aCount++; totalValutati++; }
-          else if (status === "Giustificato") { gCount++; totalValutati++; }
-          else if (status === "Infortunato") { iCount++; totalValutati++; }
-        });
-
-        const perc = totalValutati > 0 ? Math.round((pCount / totalValutati) * 100) : 0;
-        const colorBar = perc >= 75 ? 'bg-emerald-500' : perc >= 50 ? 'bg-amber-500' : 'bg-rose-500';
-
-        const card = document.createElement('div');
-        card.className = "bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs space-y-2";
-        card.innerHTML = `
-          <div class="flex items-center justify-between">
-            <div>
-              <h4 class="text-xs font-black text-slate-800">${p.name}</h4>
-              <span class="text-[10px] text-slate-400 font-bold">${pCount} Presenze su ${totalValutati} sedute valutate</span>
-            </div>
-            <span class="text-sm font-black ${perc >= 75 ? 'text-emerald-600' : perc >= 50 ? 'text-amber-600' : 'text-rose-600'}">${perc}%</span>
-          </div>
-          
-          <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-            <div class="${colorBar} h-2 rounded-full transition-all" style="width: ${perc}%"></div>
-          </div>
-
-          <div class="flex gap-2 pt-1 text-[10px] font-bold text-slate-600">
-            <span class="bg-slate-50 px-2 py-0.5 rounded border border-slate-200">🟢 P: ${pCount}</span>
-            <span class="bg-slate-50 px-2 py-0.5 rounded border border-slate-200">🔴 A: ${aCount}</span>
-            <span class="bg-slate-50 px-2 py-0.5 rounded border border-slate-200">🟡 G: ${gCount}</span>
-            <span class="bg-slate-50 px-2 py-0.5 rounded border border-slate-200">🟣 I: ${iCount}</span>
-          </div>
-        `;
-        list.appendChild(card);
-      });
-    }
-
-    // =========================================================
-    // LOGICA PRESENZE (ESISTENTE)
+    // PRESENZE (ESISTENTE)
     // =========================================================
     function parseCustomDate(dateStr) {
       if (!dateStr) return null;
@@ -1109,6 +1242,8 @@
       try {
         const res = await fetch(API_URL, {
           method: "POST",
+          mode: "cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({
             action: "saveAttendance",
             team: currentTeam,
@@ -1125,7 +1260,7 @@
           records.forEach(r => {
             appData.attendanceMap[colKey][r.row] = r.status;
           });
-          alert("✅ Presenze e meteo salvati con successo!");
+          alert("✅ Presenze e statistiche foglio aggiornate!");
         } else {
           alert("Errore: " + resData.message);
         }
@@ -1153,6 +1288,8 @@
       try {
         const res = await fetch(API_URL, {
           method: "POST",
+          mode: "cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({ action: "addPlayer", team: currentTeam, name: name })
         });
         const resData = await res.json();
@@ -1194,6 +1331,8 @@
       try {
         const res = await fetch(API_URL, {
           method: "POST",
+          mode: "cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({
             action: "addEvent",
             team: currentTeam,
