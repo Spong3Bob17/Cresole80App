@@ -23,8 +23,6 @@
     .safe-bottom {
       padding-bottom: max(env(safe-area-inset-bottom, 20px), 24px);
     }
-
-    /* CAMPETTO VETTORIALE */
     .pitch-container {
       background: radial-gradient(circle, #15803d 0%, #14532d 100%);
       border: 2px solid rgba(255, 255, 255, 0.85);
@@ -56,7 +54,7 @@
       top: 0;
       left: 28%;
       right: 28%;
-      height: 44px;
+      height: 40px;
       border: 2px solid rgba(255, 255, 255, 0.5);
       border-top: none;
       border-bottom-left-radius: 6px;
@@ -67,18 +65,14 @@
       bottom: 0;
       left: 28%;
       right: 28%;
-      height: 44px;
+      height: 40px;
       border: 2px solid rgba(255, 255, 255, 0.5);
       border-bottom: none;
       border-top-left-radius: 6px;
       border-top-right-radius: 6px;
     }
-    .player-node {
-      transition: transform 0.1s ease;
-    }
-    .player-node:active {
-      transform: scale(0.92);
-    }
+    .player-node { transition: transform 0.1s ease; }
+    .player-node:active { transform: scale(0.92); }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-900 font-sans antialiased">
@@ -87,8 +81,8 @@
   <div id="loadingOverlay" class="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex flex-col items-center justify-center gap-3 transition-opacity">
     <div class="w-12 h-12 border-4 border-indigo-400/30 border-t-indigo-500 rounded-full animate-spin"></div>
     <div class="text-center">
-      <p id="loadingMessage" class="text-white text-xs font-black tracking-wide uppercase">Caricamento Squadra...</p>
-      <p class="text-indigo-200 text-[10px] mt-0.5 font-medium">Attendere prego, sincronizzazione attiva</p>
+      <p id="loadingMessage" class="text-white text-xs font-black tracking-wide uppercase">Caricamento...</p>
+      <p class="text-indigo-200 text-[10px] mt-0.5 font-medium">Sincronizzazione rapida attiva</p>
     </div>
   </div>
 
@@ -113,7 +107,6 @@
         </button>
       </div>
 
-      <!-- SELETTORE SQUADRA CONDIVISO (NOMI PULITI SENZA 'Presenze_') -->
       <div class="relative">
         <select id="teamSelect" onchange="onTeamChange()" class="w-full bg-indigo-900/90 border border-indigo-700/80 rounded-xl px-3 py-2 text-xs font-extrabold text-white appearance-none outline-none focus:ring-2 focus:ring-indigo-400">
           <option value="Esordienti2">Esordienti 2° Anno (a 9)</option>
@@ -132,12 +125,12 @@
     </div>
   </header>
 
-  <!-- MENU DRAWER LATERALE -->
+  <!-- MENU DRAWER LATERALE DINAMICO -->
   <div id="drawerOverlay" onclick="toggleMenu()" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 hidden transition-opacity"></div>
   <aside id="drawerMenu" class="fixed top-0 right-0 bottom-0 w-72 bg-white z-50 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col safe-top safe-bottom p-5">
     <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
       <div>
-        <h2 class="text-xs font-black text-slate-900 uppercase tracking-wider">Pannello Cresole 80</h2>
+        <h2 class="text-xs font-black text-slate-900 uppercase tracking-wider">Pannello Squadra</h2>
         <span id="drawerTeamName" class="text-[11px] text-indigo-600 font-bold">Esordienti 2° Anno</span>
       </div>
       <button onclick="toggleMenu()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center active:bg-slate-200">✕</button>
@@ -152,21 +145,36 @@
       <button onclick="switchView('formazioni'); toggleMenu();" id="navFormazioni" class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition text-slate-600 hover:bg-slate-100">
         <span>⚽</span> Formazioni & Campo
       </button>
+      <button onclick="switchView('statistiche'); toggleMenu();" id="navStatistiche" class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition text-slate-600 hover:bg-slate-100">
+        <span>📊</span> Statistiche Presenze
+      </button>
     </div>
 
-    <!-- STRUMENTI AGGIUNGI RAPIDO -->
+    <!-- STRUMENTI CONTESTUALI (CAMBIANO IN BASE ALLA SCHEDA ATTIVA) -->
     <div class="space-y-2 mb-6">
-      <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Strumenti Rosa</div>
-      <button onclick="openPlayerModal(); toggleMenu();" class="w-full text-left bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-2.5 transition border border-slate-200">
-        <span>➕</span> Aggiungi Atleta
-      </button>
-      <button onclick="openAddEventModal(); toggleMenu();" class="w-full text-left bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-2.5 transition border border-slate-200">
-        <span>📅</span> Aggiungi Seduta / Partita
-      </button>
+      <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Strumenti Attivi</div>
+      
+      <!-- Strumenti Presenze -->
+      <div id="drawerToolsPresenze" class="space-y-2">
+        <button onclick="openPlayerModal(); toggleMenu();" class="w-full text-left bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-2.5 transition border border-slate-200">
+          <span>➕</span> Nuovo Atleta in Rosa
+        </button>
+        <button onclick="openAddEventModal(); toggleMenu();" class="w-full text-left bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-2.5 transition border border-slate-200">
+          <span>📅</span> Nuova Seduta / Partita
+        </button>
+      </div>
+
+      <!-- Strumenti Formazioni -->
+      <div id="drawerToolsFormazioni" class="hidden space-y-2">
+        <button onclick="openGuestPlayerModal(); toggleMenu();" class="w-full text-left bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2.5 transition border border-emerald-200">
+          <span>🧒</span> Aggiungi Prestito / Aggregato
+        </button>
+        <p class="text-[9px] text-slate-400 px-1">Aggiunge un ragazzo solo per questa partita, senza inserirlo nella rosa presenze.</p>
+      </div>
     </div>
 
     <div class="text-[10px] text-slate-400 text-center pt-3 border-t border-slate-100 mt-auto">
-      Cresole 80 App • Suite v3.2
+      Cresole 80 App • Suite v3.3
     </div>
   </aside>
 
@@ -177,7 +185,10 @@
     <main class="max-w-md mx-auto p-3.5 space-y-3">
       <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 space-y-2.5">
         <div>
-          <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">Seduta / Evento</label>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Seduta / Evento</label>
+            <button onclick="loadAllHistoryEvents()" id="btnAllHistory" class="text-[10px] font-bold text-indigo-600 hover:underline">Carica tutto lo storico</button>
+          </div>
           <select id="eventSelect" onchange="onEventChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
             <option value="">Caricamento sedute...</option>
           </select>
@@ -235,16 +246,13 @@
   <!-- ========================================================= -->
   <div id="viewFormazioni" class="hidden">
     <main class="max-w-md mx-auto p-3.5 space-y-3">
-      
-      <!-- AVVISO CATEGORIE SENZA FORMAZIONE -->
       <div id="noFormationNotice" class="hidden bg-amber-50 border border-amber-200 p-4 rounded-2xl text-center space-y-1">
         <span class="text-2xl">⚠️</span>
         <p class="text-xs font-bold text-amber-800">Questa categoria non prevede il modulo formazioni.</p>
-        <p class="text-[10px] text-amber-600">Seleziona Esordienti, Pulcini o Primi Calci dalla barra in alto.</p>
       </div>
 
       <div id="formationContainer" class="space-y-3">
-        <!-- SELETTORE DEI 4 TEMPI -->
+        <!-- 4 TEMPI COMPATTI -->
         <div class="grid grid-cols-4 gap-1.5 bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-xs">
           <button onclick="selectTempo('tempo1')" id="btnTempo1" class="py-2 rounded-xl text-xs font-black transition bg-indigo-700 text-white shadow">1° Tempo</button>
           <button onclick="selectTempo('tempo2')" id="btnTempo2" class="py-2 rounded-xl text-xs font-bold transition text-slate-600 bg-slate-100 hover:bg-slate-200">2° Tempo</button>
@@ -252,21 +260,14 @@
           <button onclick="selectTempo('tempo4')" id="btnTempo4" class="py-2 rounded-xl text-xs font-bold transition text-slate-600 bg-slate-100 hover:bg-slate-200">4° Tempo</button>
         </div>
 
-        <div class="flex items-center justify-between px-1">
-          <span id="moduleBadge" class="text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-800 px-2.5 py-1 rounded-lg">Modulo: 1-2-5-1</span>
-          <span class="text-[10px] text-slate-400 font-bold">Tocca una posizione per assegnare</span>
-        </div>
-
-        <!-- IL CAMPETTO DINAMICO -->
-        <div class="pitch-container min-h-[350px] w-full p-3 flex flex-col justify-between select-none">
+        <!-- CAMPETTO PULITO SENZA TESTI SUPERFLUI -->
+        <div class="pitch-container min-h-[350px] w-full p-2.5 flex flex-col justify-between select-none">
           <div class="pitch-box-top"></div>
           <div class="pitch-line-half"></div>
           <div class="pitch-circle"></div>
           <div class="pitch-box-bottom"></div>
 
-          <div id="pitchSlotsContainer" class="relative z-10 w-full h-full flex flex-col justify-between min-h-[330px]">
-            <!-- Renderizzato via JS in base alla categoria -->
-          </div>
+          <div id="pitchSlotsContainer" class="relative z-10 w-full h-full flex flex-col justify-between min-h-[330px]"></div>
         </div>
 
         <!-- CALCI PIAZZATI (SOLO CON I GIOCATORI IN CAMPO) -->
@@ -309,7 +310,7 @@
         <!-- PANCHINA AUTOMATICA -->
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
           <h3 class="text-xs font-black text-slate-800 flex items-center gap-1.5">
-            <span>🪑</span> Giocatori a Disposizione in Panchina
+            <span>🪑</span> Panchina (<span id="countBench" class="text-indigo-600 font-bold">0</span>)
           </h3>
           <div id="benchList" class="flex flex-wrap gap-1.5 pt-1"></div>
         </div>
@@ -325,7 +326,21 @@
     </div>
   </div>
 
-  <!-- MODAL: ASSEGNAZIONE GIOCATORE -->
+  <!-- ========================================================= -->
+  <!-- SEZIONE 3: STATISTICHE ATLETI -->
+  <!-- ========================================================= -->
+  <div id="viewStatistiche" class="hidden">
+    <main class="max-w-md mx-auto p-3.5 space-y-3">
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
+        <h2 class="text-xs font-black text-slate-800 uppercase tracking-wider">Rendimento Presenze Rosa</h2>
+        <p class="text-[10px] text-slate-400">Le percentuali escludono le sedute non valutate (vuote).</p>
+      </div>
+
+      <div id="statsList" class="space-y-2"></div>
+    </main>
+  </div>
+
+  <!-- MODAL: ASSEGNAZIONE GIOCATORE AL RUOLO -->
   <div id="modalAssignPlayer" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-100">
       <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
@@ -344,11 +359,11 @@
     </div>
   </div>
 
-  <!-- MODAL: AGGIUNGI ATLETA -->
+  <!-- MODAL: AGGIUNGI ATLETA IN ROSA (PERMANENTE) -->
   <div id="modalPlayer" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-100">
       <div class="flex items-center justify-between">
-        <h3 class="text-sm font-extrabold text-slate-900">Nuovo Atleta</h3>
+        <h3 class="text-sm font-extrabold text-slate-900">Nuovo Atleta in Rosa</h3>
         <button onclick="closePlayerModal()" class="text-slate-400 font-bold p-1">✕</button>
       </div>
       <div>
@@ -358,6 +373,27 @@
       <div class="flex gap-2 pt-1">
         <button onclick="closePlayerModal()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl text-xs font-bold">Annulla</button>
         <button onclick="confirmAddPlayer()" id="btnConfirmPlayer" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-xs font-bold shadow">Aggiungi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AGGIUNGI PRESTITO TEMPORANEO (SOLO PER QUESTA PARTITA) -->
+  <div id="modalGuestPlayer" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-extrabold text-slate-900">Atleta in Prestito</h3>
+          <p class="text-[10px] text-emerald-600 font-bold">Valido solo per questa formazione</p>
+        </div>
+        <button onclick="closeGuestPlayerModal()" class="text-slate-400 font-bold p-1">✕</button>
+      </div>
+      <div>
+        <label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Cognome e Nome</label>
+        <input type="text" id="guestPlayerName" placeholder="es. Bianchi Luca (2015)" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none">
+      </div>
+      <div class="flex gap-2 pt-1">
+        <button onclick="closeGuestPlayerModal()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl text-xs font-bold">Annulla</button>
+        <button onclick="confirmAddGuestPlayer()" class="flex-1 bg-emerald-600 text-white py-2.5 rounded-xl text-xs font-bold shadow">Aggrega</button>
       </div>
     </div>
   </div>
@@ -399,14 +435,17 @@
     let appData = { players: [], events: [], attendanceMap: {}, lineups: {} };
     let currentAttendance = {};
     let isRainActive = false;
+    let isHistoryFull = false;
 
     let currentActiveTempo = "tempo1";
     let currentAssignSlot = null;
+    let guestPlayers = []; // Atleti in prestito/temporanei
     let matchLineups = {
       tempo1: { titolari: {}, piazzati: {} },
       tempo2: { titolari: {}, piazzati: {} },
       tempo3: { titolari: {}, piazzati: {} },
-      tempo4: { titolari: {}, piazzati: {} }
+      tempo4: { titolari: {}, piazzati: {} },
+      prestiti: []
     };
 
     function showLoading(msg = "Caricamento...") {
@@ -457,34 +496,52 @@
       }
     }
 
+    // CAMBIO VISTA E AGGIORNAMENTO DINAMICO DEGLI STRUMENTI DEL DRAWER
     function switchView(viewName) {
       const viewPres = document.getElementById('viewPresenze');
       const viewForm = document.getElementById('viewFormazioni');
+      const viewStat = document.getElementById('viewStatistiche');
       const navPres = document.getElementById('navPresenze');
       const navForm = document.getElementById('navFormazioni');
+      const navStat = document.getElementById('navStatistiche');
       const title = document.getElementById('activeModuleTitle');
 
+      const toolsPres = document.getElementById('drawerToolsPresenze');
+      const toolsForm = document.getElementById('drawerToolsFormazioni');
+
+      // Reset classi
+      [viewPres, viewForm, viewStat].forEach(v => v.classList.add('hidden'));
+      [navPres, navForm, navStat].forEach(n => n.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition text-slate-600 hover:bg-slate-100");
+
       if (viewName === 'formazioni') {
-        viewPres.classList.add('hidden');
         viewForm.classList.remove('hidden');
-        navPres.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition text-slate-600 hover:bg-slate-100";
         navForm.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900";
         title.innerText = "Formazioni";
+        toolsPres.classList.add('hidden');
+        toolsForm.classList.remove('hidden');
         renderPitch();
+      } else if (viewName === 'statistiche') {
+        viewStat.classList.remove('hidden');
+        navStat.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900";
+        title.innerText = "Statistiche";
+        toolsPres.classList.remove('hidden');
+        toolsForm.classList.add('hidden');
+        renderStatistics();
       } else {
-        viewForm.classList.add('hidden');
         viewPres.classList.remove('hidden');
-        navForm.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition text-slate-600 hover:bg-slate-100";
         navPres.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900";
         title.innerText = "Presenze";
+        toolsPres.classList.remove('hidden');
+        toolsForm.classList.add('hidden');
       }
     }
 
-    // LETTURA SINGOLA E FULMINEA DI TUTTO (Presenze + Rosa + Formazioni)
-    async function loadTeamData() {
-      showLoading("Caricamento...");
+    // CARICAMENTO CON ROLLING WINDOW (VELOCE) O STORICO COMPLETO
+    async function loadTeamData(fullHistory = false) {
+      showLoading(fullHistory ? "Caricamento storico completo..." : "Sincronizzazione...");
       try {
-        const res = await fetch(`${API_URL}?team=${encodeURIComponent(currentTeam)}`);
+        const url = `${API_URL}?team=${encodeURIComponent(currentTeam)}${fullHistory ? '&allHistory=true' : ''}`;
+        const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP: ${res.status}`);
         const data = await res.json();
 
@@ -494,6 +551,7 @@
           
           if (data.lineups && data.lineups.default) {
             matchLineups = data.lineups.default;
+            guestPlayers = matchLineups.prestiti || [];
           } else {
             resetLineupStructure();
           }
@@ -504,18 +562,26 @@
           alert("Attenzione: " + data.message);
         }
       } catch (err) {
-        alert("Impossibile caricare i dati dal foglio Google.");
+        alert("Impossibile caricare i dati.");
       } finally {
         hideLoading();
       }
     }
 
+    function loadAllHistoryEvents() {
+      isHistoryFull = true;
+      document.getElementById('btnAllHistory').innerText = "Storico completo attivo";
+      loadTeamData(true);
+    }
+
     function resetLineupStructure() {
+      guestPlayers = [];
       matchLineups = {
         tempo1: { titolari: {}, piazzati: {} },
         tempo2: { titolari: {}, piazzati: {} },
         tempo3: { titolari: {}, piazzati: {} },
-        tempo4: { titolari: {}, piazzati: {} }
+        tempo4: { titolari: {}, piazzati: {} },
+        prestiti: []
       };
     }
 
@@ -523,63 +589,56 @@
       currentTeam = document.getElementById('teamSelect').value;
       localStorage.setItem('cresole80_selected_team', currentTeam);
       updateDrawerTeamTitle();
+      isHistoryFull = false;
+      document.getElementById('btnAllHistory').innerText = "Carica tutto lo storico";
       loadTeamData();
     }
 
     // =========================================================
-    // MODULI TATTICI DINAMICI & GRAFICA DEL CAMPO
+    // MODULI TATTICI & GRAFICA DEL CAMPO
     // =========================================================
     function getTacticalFormationConfig() {
       if (currentTeam.includes("Esordienti")) {
         return {
           type: "a9",
-          badge: "Modulo Esordienti: 1-2-5-1",
           roles: [
-            // ATTACCO
-            { id: "PUNTA", roleName: "Punta Centrale", label: "A", color: "bg-amber-400", rowClass: "flex justify-center" },
-            // TREQUARTI / CENTROCAMPO ALTO
-            { id: "TREQ", roleName: "Trequartista", label: "C", color: "bg-blue-500", rowClass: "flex justify-center" },
-            // LINEA CENTROCAMPISTI: ESTERNO SX - MEDIANO SX - MEDIANO DX - ESTERNO DX
-            { id: "EST_SX", roleName: "Esterno Sx", label: "E", color: "bg-blue-400", rowGroup: "linea_centro" },
-            { id: "MED_SX", roleName: "Mediano Sx", label: "M", color: "bg-blue-600", rowGroup: "linea_centro" },
-            { id: "MED_DX", roleName: "Mediano Dx", label: "M", color: "bg-blue-600", rowGroup: "linea_centro" },
-            { id: "EST_DX", roleName: "Esterno Dx", label: "E", color: "bg-blue-400", rowGroup: "linea_centro" },
-            // DIFENSORI
-            { id: "DIF_SX", roleName: "Difensore Sx", label: "D", color: "bg-emerald-500", rowGroup: "linea_difesa" },
-            { id: "DIF_DX", roleName: "Difensore Dx", label: "D", color: "bg-emerald-500", rowGroup: "linea_difesa" },
-            // PORTIERE
-            { id: "POR", roleName: "Portiere", label: "P", color: "bg-amber-500", rowClass: "flex justify-center" }
+            { id: "PUNTA", roleName: "Punta", label: "A", color: "bg-amber-400" },
+            { id: "TREQ", roleName: "Trequartista", label: "C", color: "bg-blue-500" },
+            { id: "EST_SX", roleName: "Est. Sx", label: "E", color: "bg-blue-400", rowGroup: "linea_centro" },
+            { id: "MED_SX", roleName: "Med. Sx", label: "M", color: "bg-blue-600", rowGroup: "linea_centro" },
+            { id: "MED_DX", roleName: "Med. Dx", label: "M", color: "bg-blue-600", rowGroup: "linea_centro" },
+            { id: "EST_DX", roleName: "Est. Dx", label: "E", color: "bg-blue-400", rowGroup: "linea_centro" },
+            { id: "DIF_SX", roleName: "Dif. Sx", label: "D", color: "bg-emerald-500", rowGroup: "linea_difesa" },
+            { id: "DIF_DX", roleName: "Dif. Dx", label: "D", color: "bg-emerald-500", rowGroup: "linea_difesa" },
+            { id: "POR", roleName: "Portiere", label: "P", color: "bg-amber-500" }
           ]
         };
       } else if (currentTeam.includes("Primi_Calci")) {
         return {
           type: "a5",
-          badge: "Modulo Primi Calci: 1-2-1-1",
           roles: [
-            { id: "PUNTA", roleName: "Attaccante", label: "A", color: "bg-amber-400", rowClass: "flex justify-center" },
-            { id: "CEN", roleName: "Centrocampista", label: "C", color: "bg-blue-500", rowClass: "flex justify-center" },
+            { id: "PUNTA", roleName: "Attaccante", label: "A", color: "bg-amber-400" },
+            { id: "CEN", roleName: "Centrocampista", label: "C", color: "bg-blue-500" },
             { id: "DIF_SX", roleName: "Difensore Sx", label: "D", color: "bg-emerald-500", rowGroup: "linea_difesa" },
             { id: "DIF_DX", roleName: "Difensore Dx", label: "D", color: "bg-emerald-500", rowGroup: "linea_difesa" },
-            { id: "POR", roleName: "Portiere", label: "P", color: "bg-amber-500", rowClass: "flex justify-center" }
+            { id: "POR", roleName: "Portiere", label: "P", color: "bg-amber-500" }
           ]
         };
       } else if (currentTeam.includes("Pulcini")) {
         return {
           type: "a7",
-          badge: "Modulo Pulcini: 1-2-3-1",
           roles: [
-            { id: "PUNTA", roleName: "Attaccante", label: "A", color: "bg-amber-400", rowClass: "flex justify-center" },
+            { id: "PUNTA", roleName: "Attaccante", label: "A", color: "bg-amber-400" },
             { id: "CEN_SX", roleName: "Esterno Sx", label: "C", color: "bg-blue-500", rowGroup: "linea_centro" },
             { id: "CEN_CC", roleName: "Centrale", label: "C", color: "bg-blue-500", rowGroup: "linea_centro" },
             { id: "CEN_DX", roleName: "Esterno Dx", label: "C", color: "bg-blue-500", rowGroup: "linea_centro" },
             { id: "DIF_SX", roleName: "Difensore Sx", label: "D", color: "bg-emerald-500", rowGroup: "linea_difesa" },
             { id: "DIF_DX", roleName: "Difensore Dx", label: "D", color: "bg-emerald-500", rowGroup: "linea_difesa" },
-            { id: "POR", roleName: "Portiere", label: "P", color: "bg-amber-500", rowClass: "flex justify-center" }
+            { id: "POR", roleName: "Portiere", label: "P", color: "bg-amber-500" }
           ]
         };
-      } else {
-        return null; // Piccoli Amici / Allenatori
       }
+      return null;
     }
 
     function selectTempo(t) {
@@ -596,13 +655,10 @@
       renderPitch();
     }
 
-    // FORMATTA IL NOME IN: COGNOME (sopra) e NOME (sotto)
     function formatPlayerSplitName(fullName) {
       if (!fullName) return null;
       const parts = fullName.trim().split(" ");
-      if (parts.length === 1) {
-        return { top: parts[0], bottom: "" };
-      }
+      if (parts.length === 1) return { top: parts[0], bottom: "" };
       return { top: parts[0], bottom: parts.slice(1).join(" ") };
     }
 
@@ -619,15 +675,12 @@
 
       notice.classList.add('hidden');
       container.classList.remove('hidden');
-      document.getElementById('moduleBadge').innerText = config.badge;
 
       const activeData = matchLineups[currentActiveTempo] || { titolari: {}, piazzati: {} };
       const pitchContainer = document.getElementById('pitchSlotsContainer');
       pitchContainer.innerHTML = "";
 
       const inCampo = [];
-
-      // Raggruppamento dinamico delle righe tattiche
       const groups = {};
       config.roles.forEach(r => {
         const gKey = r.rowGroup || r.id;
@@ -654,7 +707,7 @@
             <div class="w-7 h-7 rounded-full ${role.color} border-2 border-white shadow-md flex items-center justify-center font-black text-slate-900 text-[10px]">
               ${role.label}
             </div>
-            <div class="mt-0.5 px-1.5 py-0.5 rounded bg-slate-950/80 border border-white/20 text-center leading-tight shadow max-w-[78px]">
+            <div class="mt-0.5 px-1.5 py-0.5 rounded bg-slate-950/80 border border-white/20 text-center leading-tight shadow max-w-[76px]">
               ${playerName ? `
                 <div class="text-[9px] font-black text-amber-300 uppercase truncate">${split.top}</div>
                 <div class="text-[8px] font-bold text-white truncate">${split.bottom}</div>
@@ -669,27 +722,29 @@
         pitchContainer.appendChild(rowDiv);
       });
 
-      // AGGIORNA I CALCI PIAZZATI MOSTRANDO SOLO CHI È IN CAMPO!
       updateSetpieceDropdownsFiltered(inCampo, activeData.piazzati || {});
 
-      // PANCHINA AUTOMATICA
+      // Panchina: unione rosa ufficiale + prestiti temporanei
+      const allAvailable = appData.players.map(p => p.name).concat(guestPlayers);
       const benchContainer = document.getElementById('benchList');
       benchContainer.innerHTML = "";
-      const panchinari = appData.players.filter(p => !inCampo.includes(p.name));
+      const panchinari = allAvailable.filter(name => !inCampo.includes(name));
+
+      document.getElementById('countBench').innerText = panchinari.length;
 
       if (panchinari.length === 0) {
         benchContainer.innerHTML = `<span class="text-xs text-slate-400 italic">Tutti i convocati sono in campo</span>`;
       } else {
-        panchinari.forEach(p => {
+        panchinari.forEach(name => {
+          const isGuest = guestPlayers.includes(name);
           const chip = document.createElement('span');
-          chip.className = "bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold px-2.5 py-1 rounded-lg";
-          chip.innerText = p.name;
+          chip.className = `border text-[11px] font-bold px-2.5 py-1 rounded-lg ${isGuest ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-700 border-slate-200'}`;
+          chip.innerText = isGuest ? `🧒 ${name}` : name;
           benchContainer.appendChild(chip);
         });
       }
     }
 
-    // POPOLA I CALCI PIAZZATI SOLO CON I GIOCATORI SCHIERATI
     function updateSetpieceDropdownsFiltered(playersOnPitch, currentPiazzati) {
       const ids = ['setpiece_angoli', 'setpiece_ultimo', 'setpiece_palo1', 'setpiece_palo2'];
       ids.forEach(id => {
@@ -706,7 +761,6 @@
           sel.appendChild(opt);
         });
 
-        // Se il selezionato non è più in campo, resetta
         if (currentSelected && !playersOnPitch.includes(currentSelected)) {
           sel.value = "";
           updateSetpiece(typeKey, "");
@@ -723,9 +777,12 @@
       const activeTitolari = matchLineups[currentActiveTempo].titolari || {};
       const alreadyPlaying = Object.values(activeTitolari);
 
-      appData.players.forEach(p => {
-        const isSelectedHere = activeTitolari[slotId] === p.name;
-        const isPlayingElsewhere = alreadyPlaying.includes(p.name) && !isSelectedHere;
+      const allEligible = appData.players.map(p => ({ name: p.name, isGuest: false }))
+        .concat(guestPlayers.map(g => ({ name: g, isGuest: true })));
+
+      allEligible.forEach(item => {
+        const isSelectedHere = activeTitolari[slotId] === item.name;
+        const isPlayingElsewhere = alreadyPlaying.includes(item.name) && !isSelectedHere;
 
         const btn = document.createElement('button');
         btn.className = `w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-between ${
@@ -737,12 +794,12 @@
         }`;
         
         btn.innerHTML = `
-          <span>${p.name}</span>
+          <span>${item.isGuest ? '🧒 ' : ''}${item.name}</span>
           ${isPlayingElsewhere ? '<span class="text-[9px] bg-slate-200 px-1.5 py-0.5 rounded text-slate-600">In campo</span>' : ''}
           ${isSelectedHere ? '<span class="text-xs">✓</span>' : ''}
         `;
 
-        btn.onclick = () => assignPlayerToRole(p.name);
+        btn.onclick = () => assignPlayerToRole(item.name);
         container.appendChild(btn);
       });
 
@@ -754,9 +811,7 @@
     }
 
     function assignPlayerToRole(playerName) {
-      if (!matchLineups[currentActiveTempo].titolari) {
-        matchLineups[currentActiveTempo].titolari = {};
-      }
+      if (!matchLineups[currentActiveTempo].titolari) matchLineups[currentActiveTempo].titolari = {};
 
       if (!playerName) {
         delete matchLineups[currentActiveTempo].titolari[currentAssignSlot];
@@ -774,15 +829,14 @@
     }
 
     function updateSetpiece(type, val) {
-      if (!matchLineups[currentActiveTempo].piazzati) {
-        matchLineups[currentActiveTempo].piazzati = {};
-      }
+      if (!matchLineups[currentActiveTempo].piazzati) matchLineups[currentActiveTempo].piazzati = {};
       matchLineups[currentActiveTempo].piazzati[type] = val;
     }
 
     async function saveLineupToServer() {
       showLoading("Salvataggio Formazione sul Foglio...");
       try {
+        matchLineups.prestiti = guestPlayers;
         const res = await fetch(API_URL, {
           method: "POST",
           body: JSON.stringify({
@@ -794,7 +848,7 @@
         });
         const resData = await res.json();
         if (resData.status === "success") {
-          alert("✅ Formazione salvata e campetto aggiornato nel foglio Google!");
+          alert("✅ Formazione e campetti aggiornati convalidati sul foglio!");
         } else {
           alert("Errore: " + resData.message);
         }
@@ -806,14 +860,91 @@
     }
 
     // =========================================================
-    // PRESENZE (Logica con supporto stati vuoti e meteo)
+    // PRESTITI TEMPORANEI (NON AGGIUNTI AL FOGLIO PRESENZE)
+    // =========================================================
+    function openGuestPlayerModal() {
+      document.getElementById('guestPlayerName').value = "";
+      document.getElementById('modalGuestPlayer').classList.remove('hidden');
+    }
+
+    function closeGuestPlayerModal() {
+      document.getElementById('modalGuestPlayer').classList.add('hidden');
+    }
+
+    function confirmAddGuestPlayer() {
+      const name = document.getElementById('guestPlayerName').value.trim();
+      if (!name) return alert("Inserisci il nome del ragazzo aggregato");
+
+      if (!guestPlayers.includes(name)) {
+        guestPlayers.push(name);
+      }
+      closeGuestPlayerModal();
+      renderPitch();
+      alert(`✅ ${name} aggregato a questa partita!`);
+    }
+
+    // =========================================================
+    // MODULO STATISTICHE ATLETI
+    // =========================================================
+    function renderStatistics() {
+      const list = document.getElementById('statsList');
+      list.innerHTML = "";
+
+      if (appData.players.length === 0 || !appData.events || appData.events.length === 0) {
+        list.innerHTML = `<div class="text-center py-8 text-xs text-slate-400">Dati insufficienti per il calcolo delle statistiche.</div>`;
+        return;
+      }
+
+      appData.players.forEach(p => {
+        let pCount = 0, aCount = 0, gCount = 0, iCount = 0;
+        let totalValutati = 0;
+
+        appData.events.forEach(ev => {
+          const statusMap = appData.attendanceMap[String(ev.col)] || {};
+          const status = statusMap[String(p.row)];
+
+          if (status === "Presente") { pCount++; totalValutati++; }
+          else if (status === "Assente") { aCount++; totalValutati++; }
+          else if (status === "Giustificato") { gCount++; totalValutati++; }
+          else if (status === "Infortunato") { iCount++; totalValutati++; }
+        });
+
+        const perc = totalValutati > 0 ? Math.round((pCount / totalValutati) * 100) : 0;
+        const colorBar = perc >= 75 ? 'bg-emerald-500' : perc >= 50 ? 'bg-amber-500' : 'bg-rose-500';
+
+        const card = document.createElement('div');
+        card.className = "bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs space-y-2";
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-xs font-black text-slate-800">${p.name}</h4>
+              <span class="text-[10px] text-slate-400 font-bold">${pCount} Presenze su ${totalValutati} sedute valutate</span>
+            </div>
+            <span class="text-sm font-black ${perc >= 75 ? 'text-emerald-600' : perc >= 50 ? 'text-amber-600' : 'text-rose-600'}">${perc}%</span>
+          </div>
+          
+          <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+            <div class="${colorBar} h-2 rounded-full transition-all" style="width: ${perc}%"></div>
+          </div>
+
+          <div class="flex gap-2 pt-1 text-[10px] font-bold text-slate-600">
+            <span class="bg-slate-50 px-2 py-0.5 rounded border border-slate-200">🟢 P: ${pCount}</span>
+            <span class="bg-slate-50 px-2 py-0.5 rounded border border-slate-200">🔴 A: ${aCount}</span>
+            <span class="bg-slate-50 px-2 py-0.5 rounded border border-slate-200">🟡 G: ${gCount}</span>
+            <span class="bg-slate-50 px-2 py-0.5 rounded border border-slate-200">🟣 I: ${iCount}</span>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    // =========================================================
+    // LOGICA PRESENZE (ESISTENTE)
     // =========================================================
     function parseCustomDate(dateStr) {
       if (!dateStr) return null;
       const parts = dateStr.split(/[-/]/);
-      if (parts.length === 3) {
-        return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-      }
+      if (parts.length === 3) return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
       return new Date(dateStr);
     }
 
@@ -848,23 +979,17 @@
         if (evDate) {
           evDate.setHours(0, 0, 0, 0);
           const diff = today.getTime() - evDate.getTime();
-
-          if (diff === 0) {
-            exactTodayIndex = idx;
-          } else if (diff > 0 && diff < closestPastDiff) {
+          if (diff === 0) exactTodayIndex = idx;
+          else if (diff > 0 && diff < closestPastDiff) {
             closestPastDiff = diff;
             closestPastIndex = idx;
           }
         }
       });
 
-      if (exactTodayIndex !== -1) {
-        targetIndex = exactTodayIndex;
-      } else if (closestPastIndex !== -1) {
-        targetIndex = closestPastIndex;
-      } else {
-        targetIndex = 0;
-      }
+      if (exactTodayIndex !== -1) targetIndex = exactTodayIndex;
+      else if (closestPastIndex !== -1) targetIndex = closestPastIndex;
+      else targetIndex = 0;
 
       select.selectedIndex = targetIndex;
       onEventChange();
@@ -914,11 +1039,8 @@
     }
 
     function setStatus(row, status) {
-      if (currentAttendance[row] === status) {
-        currentAttendance[row] = "";
-      } else {
-        currentAttendance[row] = status;
-      }
+      if (currentAttendance[row] === status) currentAttendance[row] = "";
+      else currentAttendance[row] = status;
       renderPlayers();
       updateCounters();
     }
