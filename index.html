@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Cresole 80 - Presenze</title>
+  <title>Cresole 80 - Gestionale</title>
   <meta name="theme-color" content="#1e1b4b">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -23,20 +23,78 @@
     .safe-bottom {
       padding-bottom: max(env(safe-area-inset-bottom, 20px), 24px);
     }
+
+    /* GRAFICA DEL CAMPO DA CALCIO VETTORIALE ULTRA-LEGGERO */
+    .pitch-container {
+      background: linear-gradient(to bottom, #15803d, #166534);
+      border: 2px solid rgba(255, 255, 255, 0.85);
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: inset 0 0 18px rgba(0,0,0,0.35);
+    }
+    /* Linee di campo */
+    .pitch-line-half {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.6);
+      transform: translateY(-50%);
+    }
+    .pitch-circle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 68px;
+      height: 68px;
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .pitch-box-top {
+      position: absolute;
+      top: 0;
+      left: 26%;
+      right: 26%;
+      height: 48px;
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      border-top: none;
+      border-bottom-left-radius: 6px;
+      border-bottom-right-radius: 6px;
+    }
+    .pitch-box-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 26%;
+      right: 26%;
+      height: 48px;
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      border-bottom: none;
+      border-top-left-radius: 6px;
+      border-top-right-radius: 6px;
+    }
+    .player-node {
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .player-node:active {
+      transform: scale(0.92);
+    }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-900 font-sans antialiased">
 
-  <!-- OVERLAY SPINNER DI CARICAMENTO (BLOCCA L'INTERFACCIA) -->
+  <!-- OVERLAY DI CARICAMENTO GLOBALE -->
   <div id="loadingOverlay" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex flex-col items-center justify-center gap-3 transition-opacity">
     <div class="w-12 h-12 border-4 border-indigo-400/30 border-t-indigo-500 rounded-full animate-spin"></div>
     <div class="text-center">
       <p id="loadingMessage" class="text-white text-xs font-black tracking-wide uppercase">Caricamento Squadra...</p>
-      <p class="text-indigo-200 text-[10px] mt-0.5 font-medium">Attendere prego, non chiudere l'app</p>
+      <p class="text-indigo-200 text-[10px] mt-0.5 font-medium">Attendere prego, sincronizzazione con Google Sheets</p>
     </div>
   </div>
 
-  <!-- HEADER ELEGANTE CON SELETTORE SQUADRA INTEGRATO -->
+  <!-- HEADER ELEGANTE CON SELETTORE SQUADRA -->
   <header class="sticky top-0 z-30 bg-indigo-950 text-white shadow-md border-b border-indigo-900/60 safe-top px-4 pb-3">
     <div class="max-w-md mx-auto space-y-2">
       <div class="flex items-center justify-between">
@@ -46,11 +104,10 @@
           </div>
           <div>
             <h1 class="text-xs font-black tracking-tight text-white leading-tight">Cresole 80</h1>
-            <p id="subHeader" class="text-[10px] text-indigo-300 font-bold">Gestione Sportiva</p>
+            <p id="activeModuleTitle" class="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">Modulo: Presenze</p>
           </div>
         </div>
 
-        <!-- HAMBURGER MENU -->
         <button onclick="toggleMenu()" aria-label="Menu" class="w-9 h-9 rounded-xl bg-indigo-800/90 active:bg-indigo-700 text-white border border-indigo-600/70 flex items-center justify-center shadow-md transition active:scale-95">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"></path>
@@ -58,7 +115,7 @@
         </button>
       </div>
 
-      <!-- SELETTORE SQUADRA NELLA NAVBAR TOP -->
+      <!-- SELETTORE SQUADRA CONDIVISO -->
       <div class="relative">
         <select id="teamSelect" onchange="onTeamChange()" class="w-full bg-indigo-900/90 border border-indigo-700/80 rounded-xl px-3 py-2 text-xs font-extrabold text-white appearance-none outline-none focus:ring-2 focus:ring-indigo-400">
           <option value="Presenze_Esordienti2">Esordienti 2° Anno</option>
@@ -66,7 +123,7 @@
           <option value="Presenze_Pulcini1">Pulcini 1° Anno</option>
           <option value="Presenze_Primi_Calci">Primi Calci</option>
           <option value="Presenze_Piccoli_Amici">Piccoli Amici</option>
-          <option value="Presenze_Allenatori">Allenatori</option>
+          <option value="Presenze_Allenatori">Staff / Allenatori</option>
         </select>
         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-indigo-300">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,119 +134,256 @@
     </div>
   </header>
 
-  <!-- MENU LATERALE A SCOMPARSA (DRAWER) -->
+  <!-- MENU DRAWER LATERALE -->
   <div id="drawerOverlay" onclick="toggleMenu()" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 hidden transition-opacity"></div>
   <aside id="drawerMenu" class="fixed top-0 right-0 bottom-0 w-72 bg-white z-50 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col safe-top safe-bottom p-5">
     <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
       <div>
-        <h2 class="text-xs font-black text-slate-900 uppercase tracking-wider">Pannello Squadra</h2>
+        <h2 class="text-xs font-black text-slate-900 uppercase tracking-wider">Pannello Cresole 80</h2>
         <span id="drawerTeamName" class="text-[11px] text-indigo-600 font-bold">Esordienti 2° Anno</span>
       </div>
       <button onclick="toggleMenu()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center active:bg-slate-200">✕</button>
     </div>
 
-    <!-- AZIONI RAPIDE -->
-    <div class="space-y-2 mb-6">
-      <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Azioni per questa squadra</div>
-      <button onclick="openPlayerModal(); toggleMenu();" class="w-full text-left bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2.5 transition">
-        <span>➕</span> Aggiungi Nuovo Atleta
+    <!-- SELETTORE MODULO -->
+    <div class="space-y-2 mb-5">
+      <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Sezioni Applicazione</div>
+      <button onclick="switchView('presenze'); toggleMenu();" id="navPresenze" class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900">
+        <span>📋</span> Gestione Presenze
       </button>
-      <button onclick="openAddEventModal(); toggleMenu();" class="w-full text-left bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2.5 transition">
+      <button onclick="switchView('formazioni'); toggleMenu();" id="navFormazioni" class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition text-slate-600 hover:bg-slate-100">
+        <span>⚽</span> Formazioni & Lavagna Tattica
+      </button>
+    </div>
+
+    <!-- AZIONI RAPIDE PRESENZE -->
+    <div class="space-y-2 mb-6">
+      <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Strumenti Rosa</div>
+      <button onclick="openPlayerModal(); toggleMenu();" class="w-full text-left bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-2.5 transition border border-slate-200">
+        <span>➕</span> Aggiungi Atleta
+      </button>
+      <button onclick="openAddEventModal(); toggleMenu();" class="w-full text-left bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-2.5 transition border border-slate-200">
         <span>📅</span> Aggiungi Seduta / Partita
       </button>
     </div>
 
-    <!-- MODULI FUTURE FUNZIONALITÀ -->
-    <div class="space-y-1.5 flex-1">
-      <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-2">Moduli Suite</div>
-      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold bg-slate-100 text-indigo-700">
-        <span>📋</span> Presenze
-      </a>
-      <div class="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-400">
-        <span class="flex items-center gap-3"><span>⚽</span> Formazioni & Campo</span>
-        <span class="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded font-bold">Presto</span>
-      </div>
-      <div class="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-400">
-        <span class="flex items-center gap-3"><span>🗓️</span> Calendario Gare</span>
-        <span class="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded font-bold">Presto</span>
-      </div>
-      <div class="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-400">
-        <span class="flex items-center gap-3"><span>⏱️</span> Test Atletici</span>
-        <span class="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded font-bold">Presto</span>
-      </div>
-    </div>
-
-    <div class="text-[10px] text-slate-400 text-center pt-3 border-t border-slate-100">
-      Cresole 80 App • v2.3
+    <div class="text-[10px] text-slate-400 text-center pt-3 border-t border-slate-100 mt-auto">
+      Cresole 80 App • Suite v3.0
     </div>
   </aside>
 
-  <main class="max-w-md mx-auto p-3.5 space-y-3">
+  <!-- ========================================================= -->
+  <!-- SEZIONE 1: GESTIONE PRESENZE -->
+  <!-- ========================================================= -->
+  <div id="viewPresenze">
+    <main class="max-w-md mx-auto p-3.5 space-y-3">
+      <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 space-y-2.5">
+        <div>
+          <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">Seduta / Evento</label>
+          <select id="eventSelect" onchange="onEventChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="">Caricamento sedute...</option>
+          </select>
+        </div>
 
-    <!-- SELEZIONE SEDUTA E METEO PIOGGIA -->
-    <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 space-y-2.5">
-      <div>
-        <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">Seduta / Evento</label>
-        <select id="eventSelect" onchange="onEventChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
-          <option value="">Caricamento sedute...</option>
-        </select>
+        <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-base">🌧️</span>
+            <div>
+              <label for="checkRain" class="text-xs font-extrabold text-slate-800 select-none cursor-pointer">Condizione Pioggia</label>
+              <p class="text-[10px] text-slate-400">Segna l'evento come piovoso</p>
+            </div>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="checkRain" onchange="toggleRain()" class="sr-only peer">
+            <div class="w-10 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-700"></div>
+          </label>
+        </div>
       </div>
 
-      <!-- METEO PIOGGIA -->
-      <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <span class="text-base">🌧️</span>
-          <div>
-            <label for="checkRain" class="text-xs font-extrabold text-slate-800 select-none cursor-pointer">Condizione Pioggia</label>
-            <p class="text-[10px] text-slate-400">Segna l'evento come piovoso</p>
+      <!-- CONTATORI STATISTICHE -->
+      <div class="grid grid-cols-4 gap-1.5 text-center text-xs font-bold">
+        <div class="bg-white py-2 px-1 rounded-xl border border-slate-200/80 shadow-xs">
+          <span class="text-[9px] text-slate-400 uppercase block font-semibold">Presenti</span>
+          <span id="countPresenti" class="text-emerald-700 font-black text-sm">0</span>
+        </div>
+        <div class="bg-white py-2 px-1 rounded-xl border border-slate-200/80 shadow-xs">
+          <span class="text-[9px] text-slate-400 uppercase block font-semibold">Assenti</span>
+          <span id="countAssenti" class="text-rose-700 font-black text-sm">0</span>
+        </div>
+        <div class="bg-white py-2 px-1 rounded-xl border border-slate-200/80 shadow-xs">
+          <span class="text-[9px] text-slate-400 uppercase block font-semibold">Giustif.</span>
+          <span id="countGiustificati" class="text-amber-700 font-black text-sm">0</span>
+        </div>
+        <div class="bg-white py-2 px-1 rounded-xl border border-slate-200/80 shadow-xs">
+          <span class="text-[9px] text-slate-400 uppercase block font-semibold">Infortun.</span>
+          <span id="countInfortunati" class="text-purple-700 font-black text-sm">0</span>
+        </div>
+      </div>
+
+      <div id="playerList" class="space-y-1.5"></div>
+    </main>
+
+    <!-- FOOTER SALVATAGGIO PRESENZE -->
+    <div class="fixed bottom-0 left-0 right-0 p-3.5 bg-white/95 backdrop-blur-md border-t border-slate-200 z-20 shadow-xl safe-bottom">
+      <div class="max-w-md mx-auto">
+        <button onclick="saveAttendance()" id="btnSaveAttendance" class="w-full bg-indigo-700 hover:bg-indigo-800 active:scale-[0.99] text-white font-extrabold py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2 text-xs tracking-wider uppercase transition">
+          <span>💾 SALVA PRESENZE</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- SEZIONE 2: FORMAZIONI & LAVAGNA TATTICA -->
+  <!-- ========================================================= -->
+  <div id="viewFormazioni" class="hidden">
+    <main class="max-w-md mx-auto p-3.5 space-y-3">
+      
+      <!-- SELETTORE DEI 4 TEMPI -->
+      <div class="grid grid-cols-4 gap-1.5 bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <button onclick="selectTempo('tempo1')" id="btnTempo1" class="py-2 rounded-xl text-xs font-black transition bg-indigo-700 text-white shadow">1° Tempo</button>
+        <button onclick="selectTempo('tempo2')" id="btnTempo2" class="py-2 rounded-xl text-xs font-bold transition text-slate-600 bg-slate-100 hover:bg-slate-200">2° Tempo</button>
+        <button onclick="selectTempo('tempo3')" id="btnTempo3" class="py-2 rounded-xl text-xs font-bold transition text-slate-600 bg-slate-100 hover:bg-slate-200">3° Tempo</button>
+        <button onclick="selectTempo('tempo4')" id="btnTempo4" class="py-2 rounded-xl text-xs font-bold transition text-slate-600 bg-slate-100 hover:bg-slate-200">4° Tempo</button>
+      </div>
+
+      <!-- IL CAMPETTO TATTICO CSS -->
+      <div class="pitch-container h-80 w-full p-3 flex flex-col justify-between select-none">
+        <div class="pitch-box-top"></div>
+        <div class="pitch-line-half"></div>
+        <div class="pitch-circle"></div>
+        <div class="pitch-box-bottom"></div>
+
+        <!-- LINEA ATTACCO -->
+        <div class="relative z-10 flex justify-around items-center pt-2">
+          <div id="slot_ATT_SX" onclick="openPlayerAssignModal('ATT_SX')" class="player-node flex flex-col items-center cursor-pointer">
+            <div class="w-8 h-8 rounded-full bg-amber-400 border-2 border-white shadow-md flex items-center justify-center font-black text-slate-900 text-xs">A</div>
+            <span id="name_ATT_SX" class="text-[10px] font-bold text-white bg-black/60 px-2 py-0.5 rounded-md mt-1 max-w-[85px] truncate">Attaccante</span>
+          </div>
+          <div id="slot_ATT_DX" onclick="openPlayerAssignModal('ATT_DX')" class="player-node flex flex-col items-center cursor-pointer">
+            <div class="w-8 h-8 rounded-full bg-amber-400 border-2 border-white shadow-md flex items-center justify-center font-black text-slate-900 text-xs">A</div>
+            <span id="name_ATT_DX" class="text-[10px] font-bold text-white bg-black/60 px-2 py-0.5 rounded-md mt-1 max-w-[85px] truncate">Punta</span>
           </div>
         </div>
-        <label class="relative inline-flex items-center cursor-pointer">
-          <input type="checkbox" id="checkRain" onchange="toggleRain()" class="sr-only peer">
-          <div class="w-10 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-700"></div>
-        </label>
+
+        <!-- LINEA CENTROCAMPO -->
+        <div class="relative z-10 flex justify-around items-center">
+          <div id="slot_CEN_SX" onclick="openPlayerAssignModal('CEN_SX')" class="player-node flex flex-col items-center cursor-pointer">
+            <div class="w-8 h-8 rounded-full bg-blue-500 border-2 border-white shadow-md flex items-center justify-center font-black text-white text-xs">C</div>
+            <span id="name_CEN_SX" class="text-[10px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded-md mt-1 max-w-[80px] truncate">Est. Sinistro</span>
+          </div>
+          <div id="slot_CEN_CC" onclick="openPlayerAssignModal('CEN_CC')" class="player-node flex flex-col items-center cursor-pointer">
+            <div class="w-8 h-8 rounded-full bg-blue-500 border-2 border-white shadow-md flex items-center justify-center font-black text-white text-xs">C</div>
+            <span id="name_CEN_CC" class="text-[10px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded-md mt-1 max-w-[80px] truncate">Centrale</span>
+          </div>
+          <div id="slot_CEN_DX" onclick="openPlayerAssignModal('CEN_DX')" class="player-node flex flex-col items-center cursor-pointer">
+            <div class="w-8 h-8 rounded-full bg-blue-500 border-2 border-white shadow-md flex items-center justify-center font-black text-white text-xs">C</div>
+            <span id="name_CEN_DX" class="text-[10px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded-md mt-1 max-w-[80px] truncate">Est. Destro</span>
+          </div>
+        </div>
+
+        <!-- LINEA DIFESA -->
+        <div class="relative z-10 flex justify-around items-center">
+          <div id="slot_DIF_SX" onclick="openPlayerAssignModal('DIF_SX')" class="player-node flex flex-col items-center cursor-pointer">
+            <div class="w-8 h-8 rounded-full bg-emerald-500 border-2 border-white shadow-md flex items-center justify-center font-black text-white text-xs">D</div>
+            <span id="name_DIF_SX" class="text-[10px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded-md mt-1 max-w-[80px] truncate">Dif. Sinistro</span>
+          </div>
+          <div id="slot_DIF_DX" onclick="openPlayerAssignModal('DIF_DX')" class="player-node flex flex-col items-center cursor-pointer">
+            <div class="w-8 h-8 rounded-full bg-emerald-500 border-2 border-white shadow-md flex items-center justify-center font-black text-white text-xs">D</div>
+            <span id="name_DIF_DX" class="text-[10px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded-md mt-1 max-w-[80px] truncate">Dif. Destro</span>
+          </div>
+        </div>
+
+        <!-- PORTIERE -->
+        <div class="relative z-10 flex justify-center items-center pb-1">
+          <div id="slot_POR" onclick="openPlayerAssignModal('POR')" class="player-node flex flex-col items-center cursor-pointer">
+            <div class="w-8 h-8 rounded-full bg-amber-500 border-2 border-white shadow-md flex items-center justify-center font-black text-slate-900 text-xs">P</div>
+            <span id="name_POR" class="text-[10px] font-bold text-white bg-black/60 px-2 py-0.5 rounded-md mt-1 max-w-[90px] truncate">Portiere</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CALCI PIAZZATI (Palo, Angoli, Ultimo uomo) -->
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2.5">
+        <h3 class="text-xs font-black text-slate-800 flex items-center gap-1.5">
+          <span>🎯</span> Calci Piazzati - <span id="labelTempoPiazzati" class="text-indigo-600">1° Tempo</span>
+        </h3>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Battitore Angoli</label>
+            <select id="setpiece_angoli" onchange="updateSetpiece('angoli', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold text-slate-700 outline-none">
+              <option value="">- Non assegnato -</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Ultimo Uomo</label>
+            <select id="setpiece_ultimo" onchange="updateSetpiece('ultimo', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold text-slate-700 outline-none">
+              <option value="">- Non assegnato -</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">1° Palo</label>
+            <select id="setpiece_palo1" onchange="updateSetpiece('palo1', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold text-slate-700 outline-none">
+              <option value="">- Non assegnato -</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">2° Palo</label>
+            <select id="setpiece_palo2" onchange="updateSetpiece('palo2', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold text-slate-700 outline-none">
+              <option value="">- Non assegnato -</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANCHINA AUTOMATICA -->
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
+        <h3 class="text-xs font-black text-slate-800 flex items-center gap-1.5">
+          <span>🪑</span> Giocatori a Disposizione in Panchina
+        </h3>
+        <div id="benchList" class="flex flex-wrap gap-1.5 pt-1">
+          <!-- Generato in automatico -->
+        </div>
+      </div>
+    </main>
+
+    <!-- FOOTER SALVATAGGIO FORMAZIONE -->
+    <div class="fixed bottom-0 left-0 right-0 p-3.5 bg-white/95 backdrop-blur-md border-t border-slate-200 z-20 shadow-xl safe-bottom">
+      <div class="max-w-md mx-auto">
+        <button onclick="saveLineupToServer()" id="btnSaveLineup" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-extrabold py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2 text-xs tracking-wider uppercase transition">
+          <span>💾 SALVA FORMAZIONE SUL FOGLIO</span>
+        </button>
       </div>
     </div>
+  </div>
 
-    <!-- STATISTICHE CONTATORI -->
-    <div class="grid grid-cols-4 gap-1.5 text-center text-xs font-bold">
-      <div class="bg-white py-2 px-1 rounded-xl border border-slate-200/80 shadow-xs">
-        <span class="text-[9px] text-slate-400 uppercase block font-semibold">Presenti</span>
-        <span id="countPresenti" class="text-emerald-700 font-black text-sm">0</span>
+  <!-- MODAL: ASSEGNAZIONE GIOCATORE AL RUOLO -->
+  <div id="modalAssignPlayer" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <div>
+          <h3 class="text-xs font-black text-slate-900 uppercase">Seleziona Atleta</h3>
+          <p id="modalAssignRoleLabel" class="text-[11px] text-indigo-600 font-bold">Ruolo</p>
+        </div>
+        <button onclick="closePlayerAssignModal()" class="text-slate-400 font-bold p-1">✕</button>
       </div>
-      <div class="bg-white py-2 px-1 rounded-xl border border-slate-200/80 shadow-xs">
-        <span class="text-[9px] text-slate-400 uppercase block font-semibold">Assenti</span>
-        <span id="countAssenti" class="text-rose-700 font-black text-sm">0</span>
-      </div>
-      <div class="bg-white py-2 px-1 rounded-xl border border-slate-200/80 shadow-xs">
-        <span class="text-[9px] text-slate-400 uppercase block font-semibold">Giustif.</span>
-        <span id="countGiustificati" class="text-amber-700 font-black text-sm">0</span>
-      </div>
-      <div class="bg-white py-2 px-1 rounded-xl border border-slate-200/80 shadow-xs">
-        <span class="text-[9px] text-slate-400 uppercase block font-semibold">Infortun.</span>
-        <span id="countInfortunati" class="text-purple-700 font-black text-sm">0</span>
-      </div>
-    </div>
 
-    <!-- LISTA DEI RAGAZZI -->
-    <div id="playerList" class="space-y-1.5"></div>
-  </main>
+      <div id="modalPlayerListOptions" class="max-h-60 overflow-y-auto space-y-1.5 pr-1">
+        <!-- Generato da JS -->
+      </div>
 
-  <!-- BARRA FISSA IN BASSO PER IL SALVATAGGIO -->
-  <div class="fixed bottom-0 left-0 right-0 p-3.5 bg-white/95 backdrop-blur-md border-t border-slate-200 z-20 shadow-xl safe-bottom">
-    <div class="max-w-md mx-auto">
-      <button onclick="saveAttendance()" id="btnSave" class="w-full bg-indigo-700 hover:bg-indigo-800 active:scale-[0.99] text-white font-extrabold py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2 text-xs tracking-wider uppercase transition">
-        <span>💾 SALVA PRESENZE</span>
+      <button onclick="assignPlayerToRole(null)" class="w-full bg-rose-50 text-rose-700 hover:bg-rose-100 py-2.5 rounded-xl text-xs font-bold transition">
+        Svuota Posizione
       </button>
     </div>
   </div>
 
-  <!-- MODAL: AGGIUNGI GIOCATORE -->
+  <!-- MODAL: AGGIUNGI ATLETA -->
   <div id="modalPlayer" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-100">
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-extrabold text-slate-900">Nuovo Atleta</h3>
-        <button onclick="closePlayerModal()" class="text-slate-400 hover:text-slate-600 font-bold p-1 text-base">✕</button>
+        <button onclick="closePlayerModal()" class="text-slate-400 font-bold p-1">✕</button>
       </div>
       <div>
         <label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Cognome e Nome</label>
@@ -207,7 +401,7 @@
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-100">
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-extrabold text-slate-900">Aggiungi Seduta</h3>
-        <button onclick="closeAddEventModal()" class="text-slate-400 hover:text-slate-600 font-bold p-1 text-base">✕</button>
+        <button onclick="closeAddEventModal()" class="text-slate-400 font-bold p-1">✕</button>
       </div>
       <div class="space-y-3">
         <div>
@@ -239,6 +433,16 @@
     let appData = { players: [], events: [], attendanceMap: {} };
     let currentAttendance = {};
     let isRainActive = false;
+
+    // STRUTTURA DATI DELLA LAVAGNA TATTICA
+    let currentActiveTempo = "tempo1";
+    let currentAssignSlot = null;
+    let matchLineups = {
+      tempo1: { titolari: {}, piazzati: {} },
+      tempo2: { titolari: {}, piazzati: {} },
+      tempo3: { titolari: {}, piazzati: {} },
+      tempo4: { titolari: {}, piazzati: {} }
+    };
 
     function showLoading(msg = "Caricamento...") {
       document.getElementById('loadingMessage').innerText = msg;
@@ -272,6 +476,7 @@
 
       updateDrawerTeamTitle();
       await loadTeamData();
+      await loadLineupData();
     }
 
     function updateDrawerTeamTitle() {
@@ -292,28 +497,74 @@
       }
     }
 
+    // CAMBIO SCHERMATA: PRESENZE <-> FORMAZIONI
+    function switchView(viewName) {
+      const viewPres = document.getElementById('viewPresenze');
+      const viewForm = document.getElementById('viewFormazioni');
+      const navPres = document.getElementById('navPresenze');
+      const navForm = document.getElementById('navFormazioni');
+      const title = document.getElementById('activeModuleTitle');
+
+      if (viewName === 'formazioni') {
+        viewPres.classList.add('hidden');
+        viewForm.classList.remove('hidden');
+        navPres.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition text-slate-600 hover:bg-slate-100";
+        navForm.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900";
+        title.innerText = "Modulo: Formazioni";
+        renderPitch();
+      } else {
+        viewForm.classList.add('hidden');
+        viewPres.classList.remove('hidden');
+        navForm.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition text-slate-600 hover:bg-slate-100";
+        navPres.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900";
+        title.innerText = "Modulo: Presenze";
+      }
+    }
+
     async function loadTeamData() {
       showLoading("Caricamento Squadra...");
       try {
         const res = await fetch(`${API_URL}?team=${encodeURIComponent(currentTeam)}`);
-        if (!res.ok) {
-          throw new Error(`Errore HTTP: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP: ${res.status}`);
         const data = await res.json();
 
         if (data.status === "success") {
           appData = data;
           if (!appData.attendanceMap) appData.attendanceMap = {};
-          document.getElementById('subHeader').innerText = `${appData.players.length} Atleti in rosa`;
           populateEvents();
+          populateSetpieceDropdowns();
         } else {
           alert("Attenzione: " + data.message);
         }
       } catch (err) {
-        alert("Impossibile caricare i dati della scheda. Verifica che la scheda esista sul foglio Google.");
+        alert("Errore caricamento dati presenze.");
       } finally {
         hideLoading();
       }
+    }
+
+    async function loadLineupData() {
+      try {
+        const res = await fetch(`${API_URL}?action=getLineups&team=${encodeURIComponent(currentTeam)}`);
+        const data = await res.json();
+        if (data.status === "success" && data.lineups && data.lineups.default) {
+          matchLineups = data.lineups.default;
+        } else {
+          resetLineupStructure();
+        }
+        renderPitch();
+      } catch(err) {
+        console.warn("Impossibile caricare formazioni archiviate:", err);
+      }
+    }
+
+    function resetLineupStructure() {
+      matchLineups = {
+        tempo1: { titolari: {}, piazzati: {} },
+        tempo2: { titolari: {}, piazzati: {} },
+        tempo3: { titolari: {}, piazzati: {} },
+        tempo4: { titolari: {}, piazzati: {} }
+      };
     }
 
     function onTeamChange() {
@@ -321,8 +572,192 @@
       localStorage.setItem('cresole80_selected_team', currentTeam);
       updateDrawerTeamTitle();
       loadTeamData();
+      loadLineupData();
     }
 
+    // =========================================================
+    // LOGICA CAMPO & FORMAZIONI (IDEA 1)
+    // =========================================================
+    function selectTempo(t) {
+      currentActiveTempo = t;
+      const buttons = ['tempo1', 'tempo2', 'tempo3', 'tempo4'];
+      buttons.forEach(k => {
+        const btn = document.getElementById('btn' + k.charAt(0).toUpperCase() + k.slice(1));
+        if (k === t) {
+          btn.className = "py-2 rounded-xl text-xs font-black transition bg-indigo-700 text-white shadow";
+        } else {
+          btn.className = "py-2 rounded-xl text-xs font-bold transition text-slate-600 bg-slate-100 hover:bg-slate-200";
+        }
+      });
+      document.getElementById('labelTempoPiazzati').innerText = t.replace('tempo', '') + "° Tempo";
+      renderPitch();
+    }
+
+    function renderPitch() {
+      const activeData = matchLineups[currentActiveTempo] || { titolari: {}, piazzati: {} };
+      const roles = ['POR', 'DIF_SX', 'DIF_DX', 'CEN_SX', 'CEN_CC', 'CEN_DX', 'ATT_SX', 'ATT_DX'];
+
+      const labelsDefault = {
+        'POR': 'Portiere',
+        'DIF_SX': 'Dif. Sinistro',
+        'DIF_DX': 'Dif. Destro',
+        'CEN_SX': 'Est. Sinistro',
+        'CEN_CC': 'Centrale',
+        'CEN_DX': 'Est. Destro',
+        'ATT_SX': 'Attaccante',
+        'ATT_DX': 'Punta'
+      };
+
+      const inCampo = [];
+
+      roles.forEach(role => {
+        const playerName = activeData.titolari[role];
+        const span = document.getElementById('name_' + role);
+        if (span) {
+          if (playerName) {
+            span.innerText = playerName;
+            span.className = "text-[10px] font-black text-amber-200 bg-slate-950/80 px-2 py-0.5 rounded-md mt-1 max-w-[90px] truncate shadow border border-amber-400/40";
+            inCampo.push(playerName);
+          } else {
+            span.innerText = labelsDefault[role];
+            span.className = "text-[10px] font-bold text-white bg-black/50 px-1.5 py-0.5 rounded-md mt-1 max-w-[85px] truncate";
+          }
+        }
+      });
+
+      // Aggiorna piazzati
+      const pz = activeData.piazzati || {};
+      document.getElementById('setpiece_angoli').value = pz.angoli || "";
+      document.getElementById('setpiece_ultimo').value = pz.ultimo || "";
+      document.getElementById('setpiece_palo1').value = pz.palo1 || "";
+      document.getElementById('setpiece_palo2').value = pz.palo2 || "";
+
+      // Aggiorna la panchina (tutti i giocatori non schierati in questo tempo)
+      const benchContainer = document.getElementById('benchList');
+      benchContainer.innerHTML = "";
+      const panchinari = appData.players.filter(p => !inCampo.includes(p.name));
+
+      if (panchinari.length === 0) {
+        benchContainer.innerHTML = `<span class="text-xs text-slate-400 italic">Nessun giocatore rimasto in panchina</span>`;
+      } else {
+        panchinari.forEach(p => {
+          const chip = document.createElement('span');
+          chip.className = "bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold px-2.5 py-1 rounded-lg";
+          chip.innerText = p.name;
+          benchContainer.appendChild(chip);
+        });
+      }
+    }
+
+    function openPlayerAssignModal(role) {
+      currentAssignSlot = role;
+      document.getElementById('modalAssignRoleLabel').innerText = "Assegna: " + role.replace('_', ' ');
+      const container = document.getElementById('modalPlayerListOptions');
+      container.innerHTML = "";
+
+      const activeTitolari = matchLineups[currentActiveTempo].titolari || {};
+      const alreadyPlaying = Object.values(activeTitolari);
+
+      appData.players.forEach(p => {
+        const isSelectedHere = activeTitolari[role] === p.name;
+        const isPlayingElsewhere = alreadyPlaying.includes(p.name) && !isSelectedHere;
+
+        const btn = document.createElement('button');
+        btn.className = `w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-between ${
+          isSelectedHere 
+            ? 'bg-indigo-600 text-white shadow' 
+            : isPlayingElsewhere 
+              ? 'bg-slate-100 text-slate-400 opacity-60' 
+              : 'bg-slate-50 hover:bg-slate-100 text-slate-800'
+        }`;
+        
+        btn.innerHTML = `
+          <span>${p.name}</span>
+          ${isPlayingElsewhere ? '<span class="text-[9px] bg-slate-200 px-1.5 py-0.5 rounded text-slate-600">Già in campo</span>' : ''}
+          ${isSelectedHere ? '<span class="text-xs">✓</span>' : ''}
+        `;
+
+        btn.onclick = () => assignPlayerToRole(p.name);
+        container.appendChild(btn);
+      });
+
+      document.getElementById('modalAssignPlayer').classList.remove('hidden');
+    }
+
+    function closePlayerAssignModal() {
+      document.getElementById('modalAssignPlayer').classList.add('hidden');
+    }
+
+    function assignPlayerToRole(playerName) {
+      if (!matchLineups[currentActiveTempo].titolari) {
+        matchLineups[currentActiveTempo].titolari = {};
+      }
+
+      if (!playerName) {
+        delete matchLineups[currentActiveTempo].titolari[currentAssignSlot];
+      } else {
+        // Se il giocatore era schierato in un altro slot in questo tempo, rimuovilo dal vecchio
+        Object.keys(matchLineups[currentActiveTempo].titolari).forEach(k => {
+          if (matchLineups[currentActiveTempo].titolari[k] === playerName) {
+            delete matchLineups[currentActiveTempo].titolari[k];
+          }
+        });
+        matchLineups[currentActiveTempo].titolari[currentAssignSlot] = playerName;
+      }
+
+      closePlayerAssignModal();
+      renderPitch();
+    }
+
+    function populateSetpieceDropdowns() {
+      const ids = ['setpiece_angoli', 'setpiece_ultimo', 'setpiece_palo1', 'setpiece_palo2'];
+      ids.forEach(id => {
+        const sel = document.getElementById(id);
+        sel.innerHTML = `<option value="">- Non assegnato -</option>`;
+        appData.players.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.name;
+          opt.innerText = p.name;
+          sel.appendChild(opt);
+        });
+      });
+    }
+
+    function updateSetpiece(type, val) {
+      if (!matchLineups[currentActiveTempo].piazzati) {
+        matchLineups[currentActiveTempo].piazzati = {};
+      }
+      matchLineups[currentActiveTempo].piazzati[type] = val;
+    }
+
+    async function saveLineupToServer() {
+      showLoading("Salvataggio Formazione sul foglio...");
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "saveLineup",
+            team: currentTeam,
+            matchId: "default",
+            lineup: matchLineups
+          })
+        });
+        const resData = await res.json();
+        if (resData.status === "success") {
+          alert("✅ Formazione registrata sul Foglio Google con successo!");
+        } else {
+          alert("Errore: " + resData.message);
+        }
+      } catch (err) {
+        alert("Errore di rete durante il salvataggio della formazione.");
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // =========================================================
+    // LOGICA PRESENZE (ESISTENTE)
+    // =========================================================
     function parseCustomDate(dateStr) {
       if (!dateStr) return null;
       const parts = dateStr.split(/[-/]/);
@@ -350,7 +785,6 @@
         select.appendChild(opt);
       });
 
-      // SELEZIONE DATA PREDEFINITA: OGGI OPPURE ULTIMA PASSATA
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -406,7 +840,7 @@
         if (previousValue && ["Presente", "Assente", "Giustificato", "Infortunato"].includes(previousValue)) {
           currentAttendance[p.row] = previousValue;
         } else {
-          currentAttendance[p.row] = ""; // Di default vuoto se non salvato
+          currentAttendance[p.row] = "";
         }
       });
 
@@ -430,7 +864,6 @@
     }
 
     function setStatus(row, status) {
-      // Toggle: se riclicchi lo stesso stato, torna vuoto
       if (currentAttendance[row] === status) {
         currentAttendance[row] = "";
       } else {
@@ -557,7 +990,7 @@
             currentAttendance[resData.newPlayer.row] = "";
             renderPlayers();
             updateCounters();
-            document.getElementById('subHeader').innerText = `${appData.players.length} Atleti in rosa`;
+            populateSetpieceDropdowns();
           } else {
             await loadTeamData();
           }
