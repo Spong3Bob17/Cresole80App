@@ -148,6 +148,9 @@
       <button onclick="switchView('statistiche'); toggleMenu();" id="navStatistiche" class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition text-slate-600 hover:bg-slate-100">
         <span>📊</span> Statistiche Presenze
       </button>
+      <button onclick="switchView('calendario'); toggleMenu();" id="navCalendario" class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition text-slate-600 hover:bg-slate-100">
+        <span>🗓️</span> Calendario Gare
+      </button>
     </div>
 
     <!-- STRUMENTI CONTESTUALI -->
@@ -175,6 +178,11 @@
       <div id="drawerToolsStatistiche" class="hidden space-y-2">
         <button onclick="exportStatsSummary(); toggleMenu();" class="w-full text-left bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-2.5 transition border border-indigo-200">
           <span>📤</span> Copia Riepilogo Testo
+        </button>
+      </div>
+      <div id="drawerToolsCalendario" class="hidden space-y-2">
+        <button onclick="openGameModal(); toggleMenu();" class="w-full text-left bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-2.5 transition border border-indigo-200">
+          <span>➕</span> Aggiungi Partita
         </button>
       </div>
     </div>
@@ -257,7 +265,13 @@
         <p class="text-xs font-bold text-amber-800">Questa categoria non prevede il modulo formazioni.</p>
       </div>
 
-      <div id="formationContainer" class="space-y-3">
+        <div id="formationContainer" class="space-y-3">
+        <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs">
+          <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">Partita</label>
+          <select id="formationGameSelect" onchange="onFormationGameChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="">Formazione libera (non archiviata)</option>
+          </select>
+        </div>
         <div class="flex items-center gap-1.5 bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-xs">
           <div class="grid grid-cols-4 gap-1 flex-1">
             <button onclick="selectTempo('tempo1')" id="btnTempo1" class="py-2 rounded-xl text-xs font-black transition bg-indigo-700 text-white shadow">1° T</button>
@@ -315,11 +329,28 @@
           </div>
         </div>
 
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2.5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-black text-slate-800 flex items-center gap-1.5"><span>🛡️</span> Corner avversario</h3>
+            <span class="text-[9px] font-bold text-slate-400">Solo giocatori in campo</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Palo</label><select id="defense_palo" onchange="updateDefenseCorner('palo', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold text-slate-700"></select></div>
+            <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Vertice</label><select id="defense_vertice" onchange="updateDefenseCorner('vertice', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold text-slate-700"></select></div>
+            <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Giocatore alto</label><select id="defense_alto" onchange="updateDefenseCorner('alto', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold text-slate-700"></select></div>
+            <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Contropiede</label><select id="defense_contropiede" onchange="updateDefenseCorner('contropiede', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold text-slate-700"></select></div>
+          </div>
+        </div>
+
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
           <h3 class="text-xs font-black text-slate-800 flex items-center gap-1.5">
             <span>🪑</span> Panchina (<span id="countBench" class="text-indigo-600 font-bold">0</span>)
           </h3>
           <div id="benchList" class="flex flex-wrap gap-1.5 pt-1"></div>
+        </div>
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
+          <div class="flex justify-between items-center"><h3 class="text-xs font-black text-slate-800">⏱️ Riepilogo utilizzo</h3><span class="text-[9px] font-bold text-slate-400">tempi programmati su 4</span></div>
+          <div id="playingTimeSummary" class="grid grid-cols-2 gap-1.5"></div>
         </div>
       </div>
     </main>
@@ -364,6 +395,16 @@
         <div id="generalStatsList" class="space-y-2 pt-1"></div>
       </div>
 
+    </main>
+  </div>
+
+  <div id="viewCalendario" class="hidden">
+    <main class="max-w-md mx-auto p-3.5 space-y-3.5">
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+        <div><h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Calendario gare</h3><p id="calendarSubtitle" class="text-[10px] text-slate-400 mt-0.5">Squadra selezionata</p></div>
+        <button onclick="openGameModal()" class="bg-indigo-600 text-white px-3 py-2 rounded-xl text-xs font-bold">➕ Gara</button>
+      </div>
+      <div id="calendarGameList" class="space-y-2"></div>
     </main>
   </div>
 
@@ -455,6 +496,18 @@
     </div>
   </div>
 
+  <div id="modalGame" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-3 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between"><h3 id="gameModalTitle" class="text-sm font-extrabold text-slate-900">Nuova partita</h3><button onclick="closeGameModal()" class="text-slate-400 font-bold p-1">✕</button></div>
+      <input type="hidden" id="gameId">
+      <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Data</label><input type="date" id="gameDate" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold"></div>
+      <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Ora</label><input type="time" id="gameTime" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold"></div>
+      <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Avversario</label><input type="text" id="gameOpponent" maxlength="80" placeholder="es. ASD Vicenza" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold"></div>
+      <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Campo</label><select id="gameVenue" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold"><option value="Casa">Casa</option><option value="Fuori">Fuori</option></select></div>
+      <div class="flex gap-2 pt-1"><button onclick="closeGameModal()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl text-xs font-bold">Annulla</button><button onclick="saveGame()" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-xs font-bold shadow">Salva</button></div>
+    </div>
+  </div>
+
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbw6lVaMmUsEj4ruFW_Y4otStD_erh4mPRMMkpXUFy0CKa9BsfJ1giBedJb0yl0Hy4yBEg/exec";
 
@@ -468,11 +521,14 @@
     let currentActiveTempo = "tempo1";
     let currentAssignSlot = null;
     let guestPlayers = [];
+    let calendarGames = [];
+    let activeMatchId = "";
+    let editingGameTeam = "";
     let matchLineups = {
-      tempo1: { titolari: {}, piazzati: {} },
-      tempo2: { titolari: {}, piazzati: {} },
-      tempo3: { titolari: {}, piazzati: {} },
-      tempo4: { titolari: {}, piazzati: {} },
+      tempo1: { titolari: {}, piazzati: {}, difesaCorner: {} },
+      tempo2: { titolari: {}, piazzati: {}, difesaCorner: {} },
+      tempo3: { titolari: {}, piazzati: {}, difesaCorner: {} },
+      tempo4: { titolari: {}, piazzati: {}, difesaCorner: {} },
       prestiti: []
     };
 
@@ -483,6 +539,35 @@
 
     function hideLoading() {
       document.getElementById('loadingOverlay').classList.add('hidden');
+    }
+
+    const OFFLINE_QUEUE_KEY = 'cresole80_pending_actions_v1';
+    function getOfflineQueue() { try { return JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]'); } catch (_) { return []; } }
+    function queueOfflineAction(payload) { const q = getOfflineQueue(); q.push({ payload, createdAt: Date.now() }); localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(q)); }
+    async function postWithOfflineQueue(payload) {
+      try {
+        const res = await fetch(API_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return await res.json();
+      } catch (error) {
+        console.warn('Cresole80: salvataggio accodato offline', error);
+        queueOfflineAction(payload);
+        return { status: 'queued' };
+      }
+    }
+    async function syncOfflineQueue() {
+      const queue = getOfflineQueue();
+      if (!queue.length || !navigator.onLine) return;
+      const remaining = [];
+      for (const item of queue) {
+        try {
+          const res = await fetch(API_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(item.payload) });
+          const data = await res.json();
+          if (data.status !== 'success') remaining.push(item);
+        } catch (_) { remaining.push(item); }
+      }
+      localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(remaining));
+      if (queue.length && !remaining.length) console.info('Cresole80: sincronizzazione offline completata');
     }
 
     async function init() {
@@ -503,6 +588,8 @@
       }
 
       updateDrawerTeamTitle();
+      window.addEventListener('online', syncOfflineQueue);
+      syncOfflineQueue();
       // Caricamento iniziale modulare (solo presenze)
       await loadModuleData();
     }
@@ -531,24 +618,28 @@
       const viewPres = document.getElementById('viewPresenze');
       const viewForm = document.getElementById('viewFormazioni');
       const viewStat = document.getElementById('viewStatistiche');
+      const viewCalendar = document.getElementById('viewCalendario');
       const navPres = document.getElementById('navPresenze');
       const navForm = document.getElementById('navFormazioni');
       const navStat = document.getElementById('navStatistiche');
+      const navCalendar = document.getElementById('navCalendario');
       const title = document.getElementById('activeModuleTitle');
 
       const toolsPres = document.getElementById('drawerToolsPresenze');
       const toolsForm = document.getElementById('drawerToolsFormazioni');
       const toolsStat = document.getElementById('drawerToolsStatistiche');
+      const toolsCalendar = document.getElementById('drawerToolsCalendario');
 
-      [viewPres, viewForm, viewStat].forEach(v => v.classList.add('hidden'));
-      [navPres, navForm, navStat].forEach(n => n.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition text-slate-600 hover:bg-slate-100");
-      [toolsPres, toolsForm, toolsStat].forEach(t => t.classList.add('hidden'));
+      [viewPres, viewForm, viewStat, viewCalendar].forEach(v => v.classList.add('hidden'));
+      [navPres, navForm, navStat, navCalendar].forEach(n => n.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition text-slate-600 hover:bg-slate-100");
+      [toolsPres, toolsForm, toolsStat, toolsCalendar].forEach(t => t.classList.add('hidden'));
 
       if (viewName === 'formazioni') {
         viewForm.classList.remove('hidden');
         navForm.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900";
         title.innerText = "Formazioni";
         toolsForm.classList.remove('hidden');
+        await loadCalendarGames();
         await loadModuleData();
         renderPitch();
       } else if (viewName === 'statistiche') {
@@ -558,6 +649,12 @@
         toolsStat.classList.remove('hidden');
         await loadModuleData();
         renderHybridStatistics();
+      } else if (viewName === 'calendario') {
+        viewCalendar.classList.remove('hidden');
+        navCalendar.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900";
+        title.innerText = "Calendario";
+        toolsCalendar.classList.remove('hidden');
+        await loadCalendarGames();
       } else {
         viewPres.classList.remove('hidden');
         navPres.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900";
@@ -572,7 +669,8 @@
       showLoading(currentModule === "formazioni" ? "Caricamento campetto..." : "Sincronizzazione...");
       try {
         const antiCache = Date.now();
-        const url = `${API_URL}?team=${encodeURIComponent(currentTeam)}&mode=${currentModule}${fullHistory ? '&allHistory=true' : ''}&_t=${antiCache}`;
+        const matchParam = activeMatchId ? `&matchId=${encodeURIComponent(activeMatchId)}` : '';
+        const url = `${API_URL}?team=${encodeURIComponent(currentTeam)}&mode=${currentModule}${fullHistory ? '&allHistory=true' : ''}${matchParam}&_t=${antiCache}`;
         const res = await fetch(url, { method: "GET", mode: "cors" });
         if (!res.ok) throw new Error(`HTTP: ${res.status}`);
         const data = await res.json();
@@ -607,12 +705,73 @@
       loadModuleData(true);
     }
 
-    function onTeamChange() {
+    async function onTeamChange() {
       currentTeam = document.getElementById('teamSelect').value;
       localStorage.setItem('cresole80_selected_team', currentTeam);
       updateDrawerTeamTitle();
       document.getElementById('btnAllHistory').innerText = "Carica tutto lo storico";
-      loadModuleData();
+      activeMatchId = "";
+      if (currentModule === 'formazioni') await loadRosterForFormation();
+      await loadModuleData();
+    }
+
+    async function loadRosterForFormation() {
+      try {
+        const res = await fetch(`${API_URL}?team=${encodeURIComponent(currentTeam)}&mode=presenze&_t=${Date.now()}`, { mode: 'cors' });
+        const data = await res.json();
+        if (data.status === 'success') appData = data;
+      } catch (error) { console.warn('Cresole80: rosa non aggiornata', error); }
+    }
+
+    async function loadCalendarGames() {
+      showLoading('Caricamento calendario...');
+      try {
+        const res = await fetch(`${API_URL}?team=${encodeURIComponent(currentTeam)}&mode=calendario&_t=${Date.now()}`, { mode: 'cors' });
+        const data = await res.json();
+        if (data.status !== 'success') throw new Error(data.message || 'Calendario non disponibile');
+        calendarGames = data.games || [];
+        renderCalendar(); populateFormationGameSelect();
+      } catch (error) { console.error('Cresole80 calendario', error); alert('Errore nel caricamento del calendario.'); }
+      finally { hideLoading(); }
+    }
+
+    function renderCalendar() {
+      const allTeams = currentTeam === 'Allenatori';
+      document.getElementById('calendarSubtitle').innerText = allTeams ? 'Tutte le squadre' : document.getElementById('teamSelect').selectedOptions[0].text;
+      const list = document.getElementById('calendarGameList'); list.innerHTML = '';
+      if (!calendarGames.length) { list.innerHTML = '<div class="bg-white p-5 rounded-2xl text-center text-xs text-slate-400 border border-slate-200">Nessuna partita in calendario.</div>'; return; }
+      calendarGames.forEach(game => {
+        const card = document.createElement('button'); card.className = 'w-full text-left bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs';
+        card.onclick = () => openGameModal(game);
+        card.innerHTML = `<div class="flex justify-between gap-2"><div><div class="text-xs font-black text-slate-800">${escapeHtml(game.opponent || 'Avversario da definire')}</div><div class="text-[10px] font-bold text-slate-500 mt-1">${escapeHtml(game.team)} · ${escapeHtml(game.date)} ${game.time ? '· ' + escapeHtml(game.time) : ''}</div></div><span class="text-[10px] font-black ${game.venue === 'Casa' ? 'text-emerald-700 bg-emerald-50' : 'text-indigo-700 bg-indigo-50'} px-2 py-1 rounded-lg h-fit">${escapeHtml(game.venue)}</span></div>`;
+        list.appendChild(card);
+      });
+    }
+    function escapeHtml(value) { const div = document.createElement('div'); div.innerText = value || ''; return div.innerHTML; }
+    function populateFormationGameSelect() {
+      const select = document.getElementById('formationGameSelect'); if (!select) return;
+      select.innerHTML = '<option value="">Formazione libera (non archiviata)</option>';
+      calendarGames.filter(g => g.team === currentTeam).forEach(g => { const o = document.createElement('option'); o.value = g.id; o.innerText = `${g.date} ${g.time || ''} · ${g.venue} vs ${g.opponent}`; o.selected = g.id === activeMatchId; select.appendChild(o); });
+    }
+    async function onFormationGameChange() { activeMatchId = document.getElementById('formationGameSelect').value; await loadModuleData(); }
+    function openGameModal(game = null) {
+      editingGameTeam = game?.team || currentTeam;
+      document.getElementById('gameModalTitle').innerText = game ? 'Modifica partita' : 'Nuova partita';
+      document.getElementById('gameId').value = game?.id || '';
+      document.getElementById('gameDate').value = game?.dateIso || new Date().toISOString().slice(0, 10);
+      document.getElementById('gameTime').value = game?.time || '';
+      document.getElementById('gameOpponent').value = game?.opponent || '';
+      document.getElementById('gameVenue').value = game?.venue || 'Casa';
+      document.getElementById('modalGame').classList.remove('hidden');
+    }
+    function closeGameModal() { document.getElementById('modalGame').classList.add('hidden'); }
+    async function saveGame() {
+      const date = document.getElementById('gameDate').value, opponent = document.getElementById('gameOpponent').value.trim();
+      if (!date || !opponent) return alert('Inserisci data e avversario.');
+      showLoading('Salvataggio partita...');
+      const data = await postWithOfflineQueue({ action: 'saveGame', id: document.getElementById('gameId').value, team: editingGameTeam, date, time: document.getElementById('gameTime').value, opponent, venue: document.getElementById('gameVenue').value });
+      hideLoading(); closeGameModal();
+      if (data.status === 'success') await loadCalendarGames(); else if (data.status === 'queued') alert('📴 Partita accodata: sarà sincronizzata quando torna la connessione.'); else alert('Errore: ' + (data.message || 'salvataggio non riuscito'));
     }
 
     // =========================================================
@@ -841,7 +1000,7 @@
       notice.classList.add('hidden');
       container.classList.remove('hidden');
 
-      const activeData = matchLineups[currentActiveTempo] || { titolari: {}, piazzati: {} };
+      const activeData = matchLineups[currentActiveTempo] || { titolari: {}, piazzati: {}, difesaCorner: {} };
       const pitchContainer = document.getElementById('pitchSlotsContainer');
       pitchContainer.innerHTML = "";
 
@@ -888,6 +1047,7 @@
       });
 
       updateSetpieceDropdownsFiltered(inCampo, activeData.piazzati || {});
+      updateDefenseDropdownsFiltered(inCampo, activeData.difesaCorner || {});
 
       const allAvailable = (appData.players || []).map(p => p.name).concat(guestPlayers);
       const benchContainer = document.getElementById('benchList');
@@ -907,6 +1067,18 @@
           benchContainer.appendChild(chip);
         });
       }
+
+      const uses = {};
+      ['tempo1','tempo2','tempo3','tempo4'].forEach(tempo => Object.values(matchLineups[tempo]?.titolari || {}).filter(Boolean).forEach(name => uses[name] = (uses[name] || 0) + 1));
+      const summary = document.getElementById('playingTimeSummary');
+      summary.innerHTML = '';
+      allAvailable.forEach(name => {
+        const chip = document.createElement('div');
+        const count = uses[name] || 0;
+        chip.className = `text-[10px] font-bold px-2 py-1.5 rounded-lg border ${count ? 'bg-indigo-50 text-indigo-800 border-indigo-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`;
+        chip.innerText = `${name}: ${count}/4 tempi`;
+        summary.appendChild(chip);
+      });
     }
 
     function updateSetpieceDropdownsFiltered(playersOnPitch, currentPiazzati) {
@@ -928,6 +1100,23 @@
         if (currentSelected && !playersOnPitch.includes(currentSelected)) {
           sel.value = "";
           updateSetpiece(typeKey, "");
+        }
+      });
+    }
+
+    function updateDefenseDropdownsFiltered(playersOnPitch, currentDefense) {
+      ['palo', 'vertice', 'alto', 'contropiede'].forEach(typeKey => {
+        const sel = document.getElementById('defense_' + typeKey);
+        const selected = currentDefense[typeKey] || '';
+        sel.innerHTML = '<option value="">- Non assegnato -</option>';
+        playersOnPitch.forEach(name => {
+          const opt = document.createElement('option');
+          opt.value = name; opt.innerText = name; opt.selected = name === selected;
+          sel.appendChild(opt);
+        });
+        if (selected && !playersOnPitch.includes(selected)) {
+          sel.value = '';
+          updateDefenseCorner(typeKey, '');
         }
       });
     }
@@ -997,24 +1186,20 @@
       matchLineups[currentActiveTempo].piazzati[type] = val;
     }
 
+    function updateDefenseCorner(type, val) {
+      if (!matchLineups[currentActiveTempo].difesaCorner) matchLineups[currentActiveTempo].difesaCorner = {};
+      matchLineups[currentActiveTempo].difesaCorner[type] = val;
+    }
+
     async function saveLineupToServer() {
       showLoading("Salvataggio Formazione sul Foglio...");
       try {
         matchLineups.prestiti = guestPlayers;
-        const res = await fetch(API_URL, {
-          method: "POST",
-          mode: "cors",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({
-            action: "saveLineup",
-            team: currentTeam,
-            matchId: "default",
-            lineup: matchLineups
-          })
-        });
-        const resData = await res.json();
+        const resData = await postWithOfflineQueue({ action: "saveLineup", team: currentTeam, matchId: activeMatchId, lineup: matchLineups });
         if (resData.status === "success") {
           alert("✅ Formazione e campetti aggiornati sul foglio!");
+        } else if (resData.status === "queued") {
+          alert("📴 Formazione salvata sul dispositivo: verrà sincronizzata appena torna la connessione.");
         } else {
           alert("Errore: " + resData.message);
         }
@@ -1215,19 +1400,7 @@
       }));
 
       try {
-        const res = await fetch(API_URL, {
-          method: "POST",
-          mode: "cors",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({
-            action: "saveAttendance",
-            team: currentTeam,
-            col: selectedCol,
-            isRain: isRainActive,
-            records: records
-          })
-        });
-        const resData = await res.json();
+        const resData = await postWithOfflineQueue({ action: "saveAttendance", team: currentTeam, col: selectedCol, isRain: isRainActive, records: records });
         if (resData.status === "success") {
           const colKey = String(selectedCol);
           if (!appData.attendanceMap) appData.attendanceMap = {};
@@ -1236,6 +1409,8 @@
             appData.attendanceMap[colKey][r.row] = r.status;
           });
           alert("✅ Presenze e statistiche foglio aggiornate!");
+        } else if (resData.status === "queued") {
+          alert("📴 Presenze salvate sul dispositivo: verranno sincronizzate appena torna la connessione.");
         } else {
           alert("Errore: " + resData.message);
         }
