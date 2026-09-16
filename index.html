@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Cresole 80 - Suite</title>
   <meta name="theme-color" content="#1e1b4b">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="manifest" href="manifest.json">
@@ -402,7 +403,6 @@
     <main class="max-w-md mx-auto p-3.5 space-y-3.5">
       <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
         <div><h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Calendario gare</h3><p id="calendarSubtitle" class="text-[10px] text-slate-400 mt-0.5">Squadra selezionata</p></div>
-        <button onclick="openGameModal()" class="bg-indigo-600 text-white px-3 py-2 rounded-xl text-xs font-bold">➕ Gara</button>
       </div>
       <div id="calendarGameList" class="space-y-2"></div>
     </main>
@@ -480,13 +480,19 @@
         </div>
         <div>
           <label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Tipo Evento</label>
-          <select id="newEventType" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 outline-none">
+          <select id="newEventType" onchange="toggleMatchEventFields()" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 outline-none">
             <option value="Allenamento">Allenamento</option>
             <option value="Amichevole">Amichevole</option>
             <option value="Campionato">Partita Campionato</option>
             <option value="Torneo">Torneo</option>
             <option value="Ritiro">Ritiro</option>
           </select>
+        </div>
+        <div id="matchEventFields" class="hidden space-y-3 rounded-xl bg-indigo-50 border border-indigo-100 p-3">
+          <p class="text-[10px] text-indigo-700 font-bold">Dettagli della partita: saranno aggiunti anche al calendario della squadra.</p>
+          <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Ora</label><input type="time" id="newEventTime" class="w-full border border-slate-200 bg-white rounded-xl p-2.5 text-xs font-semibold"></div>
+          <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Avversario</label><input type="text" id="newEventOpponent" maxlength="80" placeholder="es. ASD Vicenza" class="w-full border border-slate-200 bg-white rounded-xl p-2.5 text-xs font-semibold"></div>
+          <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Campo</label><select id="newEventVenue" class="w-full border border-slate-200 bg-white rounded-xl p-2.5 text-xs font-semibold"><option value="Casa">Casa</option><option value="Fuori">Fuori</option></select></div>
         </div>
       </div>
       <div class="flex gap-2 pt-1">
@@ -544,12 +550,18 @@
     const OFFLINE_QUEUE_KEY = 'cresole80_pending_actions_v1';
     function getOfflineQueue() { try { return JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]'); } catch (_) { return []; } }
     function queueOfflineAction(payload) { const q = getOfflineQueue(); q.push({ payload, createdAt: Date.now() }); localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(q)); }
+    async function fetchJson(url, options = {}) {
+      const res = await fetch(url, options);
+      const text = await res.text();
+      if (!res.ok) throw new Error(`Server non raggiungibile (${res.status}). Verifica la distribuzione Apps Script.`);
+      try { return JSON.parse(text); }
+      catch (_) { throw new Error('L’endpoint Apps Script non ha restituito dati validi. Verifica URL /exec e distribuzione.'); }
+    }
     async function postWithOfflineQueue(payload) {
       try {
-        const res = await fetch(API_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return await res.json();
+        return await fetchJson(API_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
       } catch (error) {
+        if (navigator.onLine && /Server non raggiungibile|endpoint Apps Script/i.test(error.message || '')) throw error;
         console.warn('Cresole80: salvataggio accodato offline', error);
         queueOfflineAction(payload);
         return { status: 'queued' };
@@ -561,8 +573,7 @@
       const remaining = [];
       for (const item of queue) {
         try {
-          const res = await fetch(API_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(item.payload) });
-          const data = await res.json();
+          const data = await fetchJson(API_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(item.payload) });
           if (data.status !== 'success') remaining.push(item);
         } catch (_) { remaining.push(item); }
       }
@@ -639,8 +650,7 @@
         navForm.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900";
         title.innerText = "Formazioni";
         toolsForm.classList.remove('hidden');
-        await loadCalendarGames();
-        await loadModuleData();
+        await Promise.all([loadCalendarGames(), loadModuleData()]);
         renderPitch();
       } else if (viewName === 'statistiche') {
         viewStat.classList.remove('hidden');
@@ -653,7 +663,7 @@
         viewCalendar.classList.remove('hidden');
         navCalendar.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900";
         title.innerText = "Calendario";
-        toolsCalendar.classList.remove('hidden');
+        if (currentTeam !== 'Allenatori') toolsCalendar.classList.remove('hidden');
         await loadCalendarGames();
       } else {
         viewPres.classList.remove('hidden');
@@ -671,9 +681,7 @@
         const antiCache = Date.now();
         const matchParam = activeMatchId ? `&matchId=${encodeURIComponent(activeMatchId)}` : '';
         const url = `${API_URL}?team=${encodeURIComponent(currentTeam)}&mode=${currentModule}${fullHistory ? '&allHistory=true' : ''}${matchParam}&_t=${antiCache}`;
-        const res = await fetch(url, { method: "GET", mode: "cors" });
-        if (!res.ok) throw new Error(`HTTP: ${res.status}`);
-        const data = await res.json();
+        const data = await fetchJson(url, { method: "GET", mode: "cors" });
 
         if (data.status === "success") {
           if (currentModule === "formazioni") {
@@ -694,7 +702,8 @@
           alert("Attenzione: " + data.message);
         }
       } catch (err) {
-        alert("Errore caricamento.");
+        console.error('Cresole80 caricamento', err);
+        alert(err.message || "Errore caricamento.");
       } finally {
         hideLoading();
       }
@@ -717,8 +726,7 @@
 
     async function loadRosterForFormation() {
       try {
-        const res = await fetch(`${API_URL}?team=${encodeURIComponent(currentTeam)}&mode=presenze&_t=${Date.now()}`, { mode: 'cors' });
-        const data = await res.json();
+        const data = await fetchJson(`${API_URL}?team=${encodeURIComponent(currentTeam)}&mode=presenze&_t=${Date.now()}`, { mode: 'cors' });
         if (data.status === 'success') appData = data;
       } catch (error) { console.warn('Cresole80: rosa non aggiornata', error); }
     }
@@ -726,8 +734,7 @@
     async function loadCalendarGames() {
       showLoading('Caricamento calendario...');
       try {
-        const res = await fetch(`${API_URL}?team=${encodeURIComponent(currentTeam)}&mode=calendario&_t=${Date.now()}`, { mode: 'cors' });
-        const data = await res.json();
+        const data = await fetchJson(`${API_URL}?team=${encodeURIComponent(currentTeam)}&mode=calendario&_t=${Date.now()}`, { mode: 'cors' });
         if (data.status !== 'success') throw new Error(data.message || 'Calendario non disponibile');
         calendarGames = data.games || [];
         renderCalendar(); populateFormationGameSelect();
@@ -1436,16 +1443,12 @@
       showLoading(`Aggiunta ${name}...`);
 
       try {
-        const res = await fetch(API_URL, {
-          method: "POST",
-          mode: "cors",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "addPlayer", team: currentTeam, name: name })
-        });
-        const resData = await res.json();
+        const resData = await postWithOfflineQueue({ action: "addPlayer", team: currentTeam, name: name });
         if (resData.status === "success") {
           await loadModuleData();
           alert(`✅ ${name} aggiunto con successo!`);
+        } else if (resData.status === 'queued') {
+          alert('📴 Nuovo atleta accodato: verrà creato quando torna la connessione.');
         } else {
           alert("Errore: " + resData.message);
         }
@@ -1458,32 +1461,32 @@
 
     function openAddEventModal() {
       document.getElementById('newEventDate').valueAsDate = new Date();
+      document.getElementById('newEventTime').value = '';
+      document.getElementById('newEventOpponent').value = '';
+      document.getElementById('newEventVenue').value = 'Casa';
+      toggleMatchEventFields();
       document.getElementById('modalEvent').classList.remove('hidden');
     }
     function closeAddEventModal() {
       document.getElementById('modalEvent').classList.add('hidden');
     }
+    function isMatchEvent(type) { return ['Amichevole', 'Campionato', 'Torneo'].includes(type); }
+    function toggleMatchEventFields() {
+      const visible = isMatchEvent(document.getElementById('newEventType').value);
+      document.getElementById('matchEventFields').classList.toggle('hidden', !visible);
+    }
     async function confirmAddEvent() {
       const dateVal = document.getElementById('newEventDate').value;
       const typeVal = document.getElementById('newEventType').value;
       if (!dateVal) return alert("Inserisci una data valida");
+      const opponent = document.getElementById('newEventOpponent').value.trim();
+      if (isMatchEvent(typeVal) && !opponent) return alert('Per una partita inserisci l’avversario.');
 
       closeAddEventModal();
       showLoading("Inserimento seduta...");
 
       try {
-        const res = await fetch(API_URL, {
-          method: "POST",
-          mode: "cors",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({
-            action: "addEvent",
-            team: currentTeam,
-            date: dateVal,
-            type: typeVal
-          })
-        });
-        const resData = await res.json();
+        const resData = await postWithOfflineQueue({ action: 'addEvent', team: currentTeam, date: dateVal, type: typeVal, time: document.getElementById('newEventTime').value, opponent, venue: document.getElementById('newEventVenue').value });
         if (resData.status === "success") {
           alert("✅ Nuova data inserita in ordine!");
           await loadModuleData();
