@@ -493,6 +493,7 @@
           <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Ora</label><input type="time" id="newEventTime" class="w-full border border-slate-200 bg-white rounded-xl p-2.5 text-xs font-semibold"></div>
           <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Avversario</label><input type="text" id="newEventOpponent" maxlength="80" placeholder="es. ASD Vicenza" class="w-full border border-slate-200 bg-white rounded-xl p-2.5 text-xs font-semibold"></div>
           <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Campo</label><select id="newEventVenue" class="w-full border border-slate-200 bg-white rounded-xl p-2.5 text-xs font-semibold"><option value="Casa">Casa</option><option value="Fuori">Fuori</option></select></div>
+          <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Mister presenti</label><div id="newEventCoaches" class="max-h-28 overflow-y-auto grid grid-cols-2 gap-1.5 bg-white border border-slate-200 rounded-xl p-2"></div></div>
         </div>
       </div>
       <div class="flex gap-2 pt-1">
@@ -508,8 +509,10 @@
       <input type="hidden" id="gameId">
       <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Data</label><input type="date" id="gameDate" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold"></div>
       <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Ora</label><input type="time" id="gameTime" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold"></div>
+      <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Tipo evento</label><select id="gameType" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold"><option value="Campionato">Partita di campionato</option><option value="Amichevole">Amichevole</option><option value="Torneo">Torneo</option></select></div>
       <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Avversario</label><input type="text" id="gameOpponent" maxlength="80" placeholder="es. ASD Vicenza" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold"></div>
       <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Campo</label><select id="gameVenue" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold"><option value="Casa">Casa</option><option value="Fuori">Fuori</option></select></div>
+      <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Mister presenti</label><div id="gameCoaches" class="max-h-28 overflow-y-auto grid grid-cols-2 gap-1.5 bg-slate-50 border border-slate-200 rounded-xl p-2"></div></div>
       <div class="flex gap-2 pt-1"><button onclick="closeGameModal()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl text-xs font-bold">Annulla</button><button onclick="saveGame()" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-xs font-bold shadow">Salva</button></div>
     </div>
   </div>
@@ -528,6 +531,7 @@
     let currentAssignSlot = null;
     let guestPlayers = [];
     let calendarGames = [];
+    let calendarCoaches = [];
     let activeMatchId = "";
     let editingGameTeam = "";
     let matchLineups = {
@@ -751,6 +755,7 @@
         const data = await fetchJson(`${API_URL}?team=${encodeURIComponent(currentTeam)}&mode=calendario&_t=${Date.now()}`, { mode: 'cors' });
         if (data.status !== 'success') throw new Error(data.message || 'Calendario non disponibile');
         calendarGames = data.games || [];
+        calendarCoaches = data.coaches || [];
         renderCalendar(); populateFormationGameSelect();
       } catch (error) { console.error('Cresole80 calendario', error); alert('Errore nel caricamento del calendario.'); }
       finally { hideLoading(); }
@@ -764,7 +769,10 @@
       calendarGames.forEach(game => {
         const card = document.createElement('button'); card.className = 'w-full text-left bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs';
         card.onclick = () => openGameModal(game);
-        card.innerHTML = `<div class="flex justify-between gap-2"><div><div class="text-xs font-black text-slate-800">${escapeHtml(game.opponent || 'Avversario da definire')}</div><div class="text-[10px] font-bold text-slate-500 mt-1">${escapeHtml(game.team)} · ${escapeHtml(game.date)} ${game.time ? '· ' + escapeHtml(game.time) : ''}</div></div><span class="text-[10px] font-black ${game.venue === 'Casa' ? 'text-emerald-700 bg-emerald-50' : 'text-indigo-700 bg-indigo-50'} px-2 py-1 rounded-lg h-fit">${escapeHtml(game.venue)}</span></div>`;
+        const icon = game.venue === 'Casa' ? '🏠' : '✈️';
+        const type = game.type || 'Campionato';
+        const coaches = (game.coaches || []).length ? ` · Mister: ${escapeHtml(game.coaches.join(', '))}` : '';
+        card.innerHTML = `<div class="flex justify-between gap-2"><div><div class="text-xs font-black text-slate-800">${escapeHtml(game.opponent || 'Avversario da definire')}</div><div class="text-[10px] font-bold text-slate-500 mt-1">${escapeHtml(game.team)} · ${escapeHtml(type)} · ${escapeHtml(game.date)} ${game.time ? '· ' + escapeHtml(game.time) : ''}${coaches}</div></div><span class="text-[10px] font-black ${game.venue === 'Casa' ? 'text-emerald-700 bg-emerald-50' : 'text-indigo-700 bg-indigo-50'} px-2 py-1 rounded-lg h-fit">${icon} ${escapeHtml(game.venue)}</span></div>`;
         list.appendChild(card);
       });
     }
@@ -781,16 +789,24 @@
       document.getElementById('gameId').value = game?.id || '';
       document.getElementById('gameDate').value = game?.dateIso || new Date().toISOString().slice(0, 10);
       document.getElementById('gameTime').value = game?.time || '';
+      document.getElementById('gameType').value = game?.type || 'Campionato';
       document.getElementById('gameOpponent').value = game?.opponent || '';
       document.getElementById('gameVenue').value = game?.venue || 'Casa';
+      renderCoachChoices(game?.coaches || []);
       document.getElementById('modalGame').classList.remove('hidden');
+    }
+    function renderCoachChoices(selected) {
+      const container = document.getElementById('gameCoaches'); container.innerHTML = '';
+      if (!calendarCoaches.length) { container.innerHTML = '<span class="col-span-2 text-[10px] text-slate-400">Aggiungi prima i mister nella scheda Allenatori.</span>'; return; }
+      calendarCoaches.forEach(name => { const label=document.createElement('label'); label.className='flex items-center gap-1.5 text-[10px] font-bold text-slate-700'; const input=document.createElement('input'); input.type='checkbox'; input.value=name; input.checked=selected.includes(name); input.className='accent-indigo-600'; label.append(input,document.createTextNode(name)); container.appendChild(label); });
     }
     function closeGameModal() { document.getElementById('modalGame').classList.add('hidden'); }
     async function saveGame() {
       const date = document.getElementById('gameDate').value, opponent = document.getElementById('gameOpponent').value.trim();
       if (!date || !opponent) return alert('Inserisci data e avversario.');
       showLoading('Salvataggio partita...');
-      const data = await postWithOfflineQueue({ action: 'saveGame', id: document.getElementById('gameId').value, team: editingGameTeam, date, time: document.getElementById('gameTime').value, opponent, venue: document.getElementById('gameVenue').value });
+      const coaches = Array.from(document.querySelectorAll('#gameCoaches input:checked')).map(input => input.value);
+      const data = await postWithOfflineQueue({ action: 'saveGame', id: document.getElementById('gameId').value, team: editingGameTeam, type: document.getElementById('gameType').value, date, time: document.getElementById('gameTime').value, opponent, venue: document.getElementById('gameVenue').value, coaches });
       hideLoading(); closeGameModal();
       if (data.status === 'success') await loadCalendarGames(); else if (data.status === 'queued') alert('📴 Partita accodata: sarà sincronizzata quando torna la connessione.'); else alert('Errore: ' + (data.message || 'salvataggio non riuscito'));
     }
@@ -1473,11 +1489,15 @@
       }
     }
 
-    function openAddEventModal() {
+    async function openAddEventModal() {
+      if (!calendarCoaches.length) {
+        try { const data = await fetchJson(`${API_URL}?team=${encodeURIComponent(currentTeam)}&mode=calendario&_t=${Date.now()}`, { mode: 'cors' }); calendarCoaches = data.coaches || []; } catch (_) {}
+      }
       document.getElementById('newEventDate').valueAsDate = new Date();
       document.getElementById('newEventTime').value = '';
       document.getElementById('newEventOpponent').value = '';
       document.getElementById('newEventVenue').value = 'Casa';
+      renderEventCoachChoices();
       toggleMatchEventFields();
       document.getElementById('modalEvent').classList.remove('hidden');
     }
@@ -1488,6 +1508,11 @@
     function toggleMatchEventFields() {
       const visible = isMatchEvent(document.getElementById('newEventType').value);
       document.getElementById('matchEventFields').classList.toggle('hidden', !visible);
+    }
+    function renderEventCoachChoices() {
+      const container=document.getElementById('newEventCoaches'); container.innerHTML='';
+      if (!calendarCoaches.length) { container.innerHTML='<span class="col-span-2 text-[10px] text-slate-400">Nessun mister trovato nella scheda Allenatori.</span>'; return; }
+      calendarCoaches.forEach(name=>{const label=document.createElement('label');label.className='flex items-center gap-1.5 text-[10px] font-bold text-slate-700';const input=document.createElement('input');input.type='checkbox';input.value=name;input.className='accent-indigo-600';label.append(input,document.createTextNode(name));container.appendChild(label);});
     }
     async function confirmAddEvent() {
       const dateVal = document.getElementById('newEventDate').value;
@@ -1500,7 +1525,8 @@
       showLoading("Inserimento seduta...");
 
       try {
-        const resData = await postWithOfflineQueue({ action: 'addEvent', team: currentTeam, date: dateVal, type: typeVal, time: document.getElementById('newEventTime').value, opponent, venue: document.getElementById('newEventVenue').value });
+        const coaches = Array.from(document.querySelectorAll('#newEventCoaches input:checked')).map(input => input.value);
+        const resData = await postWithOfflineQueue({ action: 'addEvent', team: currentTeam, date: dateVal, type: typeVal, time: document.getElementById('newEventTime').value, opponent, venue: document.getElementById('newEventVenue').value, coaches });
         if (resData.status === "success") {
           alert("✅ Nuova data inserita in ordine!");
           await loadModuleData();
