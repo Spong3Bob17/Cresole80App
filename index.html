@@ -172,6 +172,9 @@
       </div>
 
       <div id="drawerToolsFormazioni" class="hidden space-y-2">
+        <button onclick="addTempo(); toggleMenu();" class="w-full text-left bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2.5 transition border border-indigo-200">
+          <span>➕</span> Aggiungi Tempo / Campetto
+        </button>
         <button onclick="openGuestPlayerModal(); toggleMenu();" class="w-full text-left bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2.5 transition border border-emerald-200">
           <span>🧒</span> Aggiungi Prestito / Aggregato
         </button>
@@ -271,19 +274,8 @@
       </div>
 
         <div id="formationContainer" class="space-y-3">
-        <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs">
-          <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">Partita</label>
-          <select id="formationGameSelect" onchange="onFormationGameChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
-            <option value="">Formazione libera (non archiviata)</option>
-          </select>
-        </div>
         <div class="flex items-center gap-1.5 bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-xs">
-          <div class="grid grid-cols-4 gap-1 flex-1">
-            <button onclick="selectTempo('tempo1')" id="btnTempo1" class="py-2 rounded-xl text-xs font-black transition bg-indigo-700 text-white shadow">1° T</button>
-            <button onclick="selectTempo('tempo2')" id="btnTempo2" class="py-2 rounded-xl text-xs font-bold transition text-slate-600 bg-slate-100 hover:bg-slate-200">2° T</button>
-            <button onclick="selectTempo('tempo3')" id="btnTempo3" class="py-2 rounded-xl text-xs font-bold transition text-slate-600 bg-slate-100 hover:bg-slate-200">3° T</button>
-            <button onclick="selectTempo('tempo4')" id="btnTempo4" class="py-2 rounded-xl text-xs font-bold transition text-slate-600 bg-slate-100 hover:bg-slate-200">4° T</button>
-          </div>
+          <div id="tempoTabs" class="grid grid-cols-4 gap-1 flex-1"></div>
           <button onclick="clearCurrentTempoFormation()" title="Svuota questo tempo" class="px-2.5 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-xl text-xs font-bold border border-rose-200 transition">
             🗑️
           </button>
@@ -342,7 +334,6 @@
           <div class="grid grid-cols-2 gap-2 text-xs">
             <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Palo</label><select id="defense_palo" onchange="updateDefenseCorner('palo', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold text-slate-700"></select></div>
             <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Vertice</label><select id="defense_vertice" onchange="updateDefenseCorner('vertice', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold text-slate-700"></select></div>
-            <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Giocatore alto</label><select id="defense_alto" onchange="updateDefenseCorner('alto', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold text-slate-700"></select></div>
             <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Contropiede</label><select id="defense_contropiede" onchange="updateDefenseCorner('contropiede', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold text-slate-700"></select></div>
           </div>
         </div>
@@ -354,7 +345,7 @@
           <div id="benchList" class="flex flex-wrap gap-1.5 pt-1"></div>
         </div>
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
-          <div class="flex justify-between items-center"><h3 class="text-xs font-black text-slate-800">⏱️ Riepilogo utilizzo</h3><span class="text-[9px] font-bold text-slate-400">tempi programmati su 4</span></div>
+          <div class="flex justify-between items-center"><h3 class="text-xs font-black text-slate-800">⏱️ Riepilogo utilizzo</h3><span id="playingTimeLabel" class="text-[9px] font-bold text-slate-400">tempi programmati</span></div>
           <div id="playingTimeSummary" class="grid grid-cols-2 gap-1.5"></div>
         </div>
       </div>
@@ -507,6 +498,17 @@
     </div>
   </div>
 
+  <div id="modalSubstitution" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <div><h3 class="text-xs font-black text-slate-900 uppercase">Sostituzione a metà tempo</h3><p id="modalSubstitutePlayer" class="text-[11px] text-indigo-600 font-bold"></p></div>
+        <button onclick="closeSubstitutionModal()" class="text-slate-400 font-bold p-1 text-base">✕</button>
+      </div>
+      <p class="text-[11px] text-slate-500">Scegli il giocatore che esce. La sostituzione non cambia l'undici iniziale.</p>
+      <div id="modalSubstitutionOptions" class="max-h-60 overflow-y-auto space-y-1.5 pr-1"></div>
+    </div>
+  </div>
+
   <div id="modalGame" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white rounded-3xl max-w-sm w-full max-h-[calc(100dvh-24px)] overflow-y-auto p-5 space-y-3 shadow-2xl border border-slate-100">
       <div class="flex items-center justify-between"><h3 id="gameModalTitle" class="text-sm font-extrabold text-slate-900">Nuova partita</h3><button onclick="closeGameModal()" class="text-slate-400 font-bold p-1">✕</button></div>
@@ -536,16 +538,26 @@
     let guestPlayers = [];
     let calendarGames = [];
     let calendarCoaches = [];
-    let activeMatchId = "";
     let editingGameTeam = "";
     let viewRequestId = 0;
+    let selectedSubstitute = "";
     let matchLineups = {
-      tempo1: { titolari: {}, piazzati: {}, difesaCorner: {} },
-      tempo2: { titolari: {}, piazzati: {}, difesaCorner: {} },
-      tempo3: { titolari: {}, piazzati: {}, difesaCorner: {} },
-      tempo4: { titolari: {}, piazzati: {}, difesaCorner: {} },
+      tempo1: { titolari: {}, piazzati: {}, difesaCorner: {}, sostituzioni: {} },
+      tempo2: { titolari: {}, piazzati: {}, difesaCorner: {}, sostituzioni: {} },
+      tempo3: { titolari: {}, piazzati: {}, difesaCorner: {}, sostituzioni: {} },
+      tempo4: { titolari: {}, piazzati: {}, difesaCorner: {}, sostituzioni: {} },
       prestiti: []
     };
+
+    function emptyTempo() { return { titolari: {}, piazzati: {}, difesaCorner: {}, sostituzioni: {} }; }
+    function tempoKeys() { return Object.keys(matchLineups).filter(key => /^tempo\d+$/.test(key)).sort((a,b) => Number(a.slice(5)) - Number(b.slice(5))); }
+    function normalizeClientLineup(lineup = {}) {
+      const normalized = { prestiti: Array.isArray(lineup.prestiti) ? lineup.prestiti : [] };
+      const keys = Object.keys(lineup).filter(key => /^tempo\d+$/.test(key));
+      ['tempo1','tempo2','tempo3','tempo4'].forEach(key => { if (!keys.includes(key)) keys.push(key); });
+      keys.forEach(key => { const value = lineup[key] || {}; normalized[key] = { titolari: value.titolari || {}, piazzati: value.piazzati || {}, difesaCorner: value.difesaCorner || {}, sostituzioni: value.sostituzioni || {} }; });
+      return normalized;
+    }
 
     function showLoading(msg = "Caricamento...") {
       document.getElementById('loadingMessage').innerText = msg;
@@ -675,7 +687,8 @@
         title.innerText = "Formazioni";
         toolsForm.classList.remove('hidden');
         appData = { players: [], events: [], attendanceMap: {} };
-        await Promise.all([loadRosterForFormation(requestId), loadCalendarGames(requestId), loadModuleData(false, requestId)]);
+        clearViewContent('formazioni');
+        await Promise.all([loadRosterForFormation(requestId), loadModuleData(false, requestId)]);
         if (isActiveRequest(requestId, 'formazioni')) renderPitch();
       } else if (viewName === 'statistiche') {
         viewStat.classList.remove('hidden');
@@ -715,7 +728,8 @@
       } else if (viewName === 'statistiche') {
         document.getElementById('generalStatsList').innerHTML = '<div class="text-center py-5 text-xs text-slate-400">Caricamento statistiche…</div>';
       } else if (viewName === 'formazioni') {
-        document.getElementById('formationContainer').innerHTML = '<div class="bg-white p-5 rounded-2xl text-center text-xs text-slate-400 border border-slate-200">Caricamento formazione…</div>';
+        document.getElementById('pitchSlotsContainer').innerHTML = '<div class="h-full flex items-center justify-center text-xs font-bold text-white/80">Caricamento formazione…</div>';
+        document.getElementById('benchList').innerHTML = '';
       }
     }
 
@@ -724,7 +738,7 @@
       if (viewName === 'calendario') document.getElementById('calendarGameList').innerHTML = `<div class="lg:col-span-2 bg-rose-50 border border-rose-200 p-5 rounded-2xl text-center text-xs font-bold text-rose-700">${safe}</div>`;
       if (viewName === 'presenze') document.getElementById('playerList').innerHTML = `<div class="bg-rose-50 border border-rose-200 p-5 rounded-2xl text-center text-xs font-bold text-rose-700">${safe}</div>`;
       if (viewName === 'statistiche') document.getElementById('generalStatsList').innerHTML = `<div class="bg-rose-50 border border-rose-200 p-5 rounded-2xl text-center text-xs font-bold text-rose-700">${safe}</div>`;
-      if (viewName === 'formazioni') document.getElementById('formationContainer').innerHTML = `<div class="bg-rose-50 border border-rose-200 p-5 rounded-2xl text-center text-xs font-bold text-rose-700">${safe}</div>`;
+      if (viewName === 'formazioni') document.getElementById('pitchSlotsContainer').innerHTML = `<div class="h-full flex items-center justify-center text-xs font-bold text-rose-100 text-center px-6">${safe}</div>`;
     }
 
     // CARICAMENTO SEPARATO (CHIEDE SOLO I DATI DELLA SCHEDA CORRENTE + TIMESTAMP ANTI-CACHE)
@@ -733,15 +747,14 @@
       showLoading(currentModule === "formazioni" ? "Caricamento campetto..." : "Sincronizzazione...");
       try {
         const antiCache = Date.now();
-        const matchParam = activeMatchId ? `&matchId=${encodeURIComponent(activeMatchId)}` : '';
-        const url = `${API_URL}?team=${encodeURIComponent(currentTeam)}&mode=${currentModule}${fullHistory ? '&allHistory=true' : ''}${matchParam}&_t=${antiCache}`;
+        const url = `${API_URL}?team=${encodeURIComponent(currentTeam)}&mode=${currentModule}${fullHistory ? '&allHistory=true' : ''}&_t=${antiCache}`;
         const data = await fetchJson(url, { method: "GET", mode: "cors" });
 
         if (!isActiveRequest(requestId, requestedModule) || requestedTeam !== currentTeam) return;
         if (data.status === "success") {
           if (currentModule === "formazioni") {
             if (data.lineups) {
-              matchLineups = data.lineups;
+              matchLineups = normalizeClientLineup(data.lineups);
               guestPlayers = matchLineups.prestiti || [];
             }
             renderPitch();
@@ -774,7 +787,6 @@
       localStorage.setItem('cresole80_selected_team', currentTeam);
       updateDrawerTeamTitle();
       document.getElementById('btnAllHistory').innerText = "Carica tutto lo storico";
-      activeMatchId = "";
       calendarGames = [];
       calendarCoaches = [];
       await switchView(currentModule);
@@ -797,7 +809,7 @@
         if (data.status !== 'success') throw new Error(data.message || 'Calendario non disponibile');
         calendarGames = data.games || [];
         calendarCoaches = data.coaches || [];
-        renderCalendar(); populateFormationGameSelect();
+        renderCalendar();
       } catch (error) { console.error('Cresole80 calendario', error); if (isActiveRequest(requestId, currentModule) && requestedTeam === currentTeam) showViewError('calendario', error.message || 'Impossibile caricare il calendario.'); }
       finally { hideLoading(); }
     }
@@ -820,12 +832,6 @@
       });
     }
     function escapeHtml(value) { const div = document.createElement('div'); div.innerText = value || ''; return div.innerHTML; }
-    function populateFormationGameSelect() {
-      const select = document.getElementById('formationGameSelect'); if (!select) return;
-      select.innerHTML = '<option value="">Formazione libera (non archiviata)</option>';
-      calendarGames.filter(g => g.team === currentTeam).forEach(g => { const o = document.createElement('option'); o.value = g.id; o.innerText = `${g.date} ${g.time || ''} · ${g.venue} vs ${g.opponent}`; o.selected = g.id === activeMatchId; select.appendChild(o); });
-    }
-    async function onFormationGameChange() { activeMatchId = document.getElementById('formationGameSelect').value; await loadModuleData(); }
     function openGameModal(game = null) {
       editingGameTeam = game?.team || currentTeam;
       document.getElementById('gameModalTitle').innerText = game ? 'Modifica partita' : 'Nuova partita';
@@ -1040,8 +1046,9 @@
 
     function selectTempo(t) {
       currentActiveTempo = t;
-      ['tempo1', 'tempo2', 'tempo3', 'tempo4'].forEach(k => {
+      tempoKeys().forEach(k => {
         const btn = document.getElementById('btn' + k.charAt(0).toUpperCase() + k.slice(1));
+        if (!btn) return;
         if (k === t) {
           btn.className = "py-2 rounded-xl text-xs font-black transition bg-indigo-700 text-white shadow";
         } else {
@@ -1052,9 +1059,32 @@
       renderPitch();
     }
 
+    function renderTempoTabs() {
+      const tabs = document.getElementById('tempoTabs');
+      const keys = tempoKeys();
+      tabs.className = `grid gap-1 flex-1 ${keys.length <= 4 ? 'grid-cols-4' : 'grid-cols-3 sm:grid-cols-4'}`;
+      tabs.innerHTML = '';
+      keys.forEach(key => {
+        const number = key.replace('tempo', '');
+        const button = document.createElement('button');
+        button.id = 'btn' + key.charAt(0).toUpperCase() + key.slice(1);
+        button.onclick = () => selectTempo(key);
+        button.className = `py-2 rounded-xl text-xs transition ${key === currentActiveTempo ? 'font-black bg-indigo-700 text-white shadow' : 'font-bold text-slate-600 bg-slate-100 hover:bg-slate-200'}`;
+        button.textContent = `${number}° T`;
+        tabs.appendChild(button);
+      });
+    }
+
+    function addTempo() {
+      const next = Math.max(...tempoKeys().map(key => Number(key.replace('tempo', '')))) + 1;
+      const key = `tempo${next}`;
+      matchLineups[key] = emptyTempo();
+      selectTempo(key);
+    }
+
     function clearCurrentTempoFormation() {
       if (confirm(`Vuoi svuotare la formazione e i piazzati del ${currentActiveTempo.replace('tempo', '')}° Tempo?`)) {
-        matchLineups[currentActiveTempo] = { titolari: {}, piazzati: {} };
+        matchLineups[currentActiveTempo] = emptyTempo();
         renderPitch();
       }
     }
@@ -1080,7 +1110,10 @@
       notice.classList.add('hidden');
       container.classList.remove('hidden');
 
-      const activeData = matchLineups[currentActiveTempo] || { titolari: {}, piazzati: {}, difesaCorner: {} };
+      if (!matchLineups[currentActiveTempo]) currentActiveTempo = tempoKeys()[0] || 'tempo1';
+      renderTempoTabs();
+
+      const activeData = matchLineups[currentActiveTempo] || emptyTempo();
       const pitchContainer = document.getElementById('pitchSlotsContainer');
       pitchContainer.innerHTML = "";
 
@@ -1099,6 +1132,7 @@
 
         roleList.forEach(role => {
           const playerName = activeData.titolari[role.id];
+          const substitution = activeData.sostituzioni?.[role.id];
           if (playerName) inCampo.push(playerName);
 
           const split = formatPlayerSplitName(playerName);
@@ -1115,6 +1149,7 @@
               ${playerName ? `
                 <div class="text-[9px] font-black text-amber-300 uppercase truncate">${split.top}</div>
                 <div class="text-[8px] font-bold text-white truncate">${split.bottom}</div>
+                ${substitution?.in ? `<div class="mt-0.5 text-[8px] font-black text-emerald-300 truncate">⇄ ${escapeHtml(substitution.in)}</div>` : ''}
               ` : `
                 <div class="text-[8px] font-bold text-slate-300 truncate">${role.roleName}</div>
               `}
@@ -1141,22 +1176,34 @@
       } else {
         panchinari.forEach(name => {
           const isGuest = guestPlayers.includes(name);
-          const chip = document.createElement('span');
-          chip.className = `border text-[11px] font-bold px-2.5 py-1 rounded-lg ${isGuest ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-700 border-slate-200'}`;
-          chip.innerText = isGuest ? `🧒 ${name}` : name;
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.title = 'Imposta una sostituzione a metà tempo';
+          chip.onclick = () => openSubstitutionModal(name);
+          chip.className = `border text-[11px] font-bold px-2.5 py-1 rounded-lg hover:ring-2 hover:ring-indigo-200 active:scale-95 transition ${isGuest ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-700 border-slate-200'}`;
+          chip.innerText = `${isGuest ? '🧒 ' : ''}${name} ⇄`;
           benchContainer.appendChild(chip);
         });
       }
 
       const uses = {};
-      ['tempo1','tempo2','tempo3','tempo4'].forEach(tempo => Object.values(matchLineups[tempo]?.titolari || {}).filter(Boolean).forEach(name => uses[name] = (uses[name] || 0) + 1));
+      tempoKeys().forEach(tempo => {
+        const data = matchLineups[tempo] || emptyTempo();
+        Object.values(data.titolari || {}).filter(Boolean).forEach(name => uses[name] = (uses[name] || 0) + 1);
+        Object.values(data.sostituzioni || {}).forEach(sub => {
+          if (!sub?.out || !sub?.in) return;
+          uses[sub.out] = (uses[sub.out] || 0) - 0.5;
+          uses[sub.in] = (uses[sub.in] || 0) + 0.5;
+        });
+      });
       const summary = document.getElementById('playingTimeSummary');
       summary.innerHTML = '';
+      document.getElementById('playingTimeLabel').innerText = `tempi programmati su ${tempoKeys().length}`;
       allAvailable.forEach(name => {
         const chip = document.createElement('div');
         const count = uses[name] || 0;
         chip.className = `text-[10px] font-bold px-2 py-1.5 rounded-lg border ${count ? 'bg-indigo-50 text-indigo-800 border-indigo-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`;
-        chip.innerText = `${name}: ${count}/4 tempi`;
+        chip.innerText = `${name}: ${Number.isInteger(count) ? count : count.toFixed(1)}/${tempoKeys().length} tempi`;
         summary.appendChild(chip);
       });
     }
@@ -1185,7 +1232,7 @@
     }
 
     function updateDefenseDropdownsFiltered(playersOnPitch, currentDefense) {
-      ['palo', 'vertice', 'alto', 'contropiede'].forEach(typeKey => {
+      ['palo', 'vertice', 'contropiede'].forEach(typeKey => {
         const sel = document.getElementById('defense_' + typeKey);
         const selected = currentDefense[typeKey] || '';
         sel.innerHTML = '<option value="">- Non assegnato -</option>';
@@ -1243,6 +1290,42 @@
       document.getElementById('modalAssignPlayer').classList.add('hidden');
     }
 
+    function openSubstitutionModal(playerName) {
+      const active = matchLineups[currentActiveTempo] || emptyTempo();
+      const starters = Object.entries(active.titolari || {}).filter(([, name]) => name && name !== playerName);
+      if (!starters.length) return alert('Inserisci prima i giocatori in campo.');
+      selectedSubstitute = playerName;
+      document.getElementById('modalSubstitutePlayer').innerText = `${playerName} entra a metà tempo`;
+      const container = document.getElementById('modalSubstitutionOptions');
+      container.innerHTML = '';
+      starters.forEach(([role, player]) => {
+        const assigned = active.sostituzioni?.[role];
+        const button = document.createElement('button');
+        button.className = `w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-between ${assigned?.in ? 'bg-amber-50 text-amber-800' : 'bg-slate-50 hover:bg-slate-100 text-slate-800'}`;
+        button.innerHTML = `<span>${player}</span><span class="text-[10px] text-slate-400">${assigned?.in ? `ora: ${escapeHtml(assigned.in)}` : 'Sostituisci'}</span>`;
+        button.onclick = () => assignSubstitution(role);
+        container.appendChild(button);
+      });
+      document.getElementById('modalSubstitution').classList.remove('hidden');
+    }
+
+    function closeSubstitutionModal() {
+      document.getElementById('modalSubstitution').classList.add('hidden');
+      selectedSubstitute = '';
+    }
+
+    function assignSubstitution(roleId) {
+      const active = matchLineups[currentActiveTempo];
+      if (!active || !selectedSubstitute || !active.titolari?.[roleId]) return;
+      if (!active.sostituzioni) active.sostituzioni = {};
+      Object.keys(active.sostituzioni).forEach(role => {
+        if (active.sostituzioni[role]?.in === selectedSubstitute) delete active.sostituzioni[role];
+      });
+      active.sostituzioni[roleId] = { out: active.titolari[roleId], in: selectedSubstitute };
+      closeSubstitutionModal();
+      renderPitch();
+    }
+
     function assignPlayerToRole(playerName) {
       if (!matchLineups[currentActiveTempo].titolari) matchLineups[currentActiveTempo].titolari = {};
 
@@ -1256,6 +1339,7 @@
         });
         matchLineups[currentActiveTempo].titolari[currentAssignSlot] = playerName;
       }
+      if (matchLineups[currentActiveTempo].sostituzioni) delete matchLineups[currentActiveTempo].sostituzioni[currentAssignSlot];
 
       closePlayerAssignModal();
       renderPitch();
@@ -1275,7 +1359,7 @@
       showLoading("Salvataggio Formazione sul Foglio...");
       try {
         matchLineups.prestiti = guestPlayers;
-        const resData = await postWithOfflineQueue({ action: "saveLineup", team: currentTeam, matchId: activeMatchId, lineup: matchLineups });
+        const resData = await postWithOfflineQueue({ action: "saveLineup", team: currentTeam, lineup: matchLineups });
         if (resData.status === "success") {
           alert("✅ Formazione e campetti aggiornati sul foglio!");
         } else if (resData.status === "queued") {
