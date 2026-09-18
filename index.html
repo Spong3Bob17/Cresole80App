@@ -83,7 +83,7 @@
 <body class="bg-slate-100 text-slate-900 font-sans antialiased">
 
   <!-- OVERLAY CARICAMENTO -->
-  <div id="loadingOverlay" class="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex flex-col items-center justify-center gap-3 transition-opacity">
+  <div id="loadingOverlay" class="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-[100] flex flex-col items-center justify-center gap-3 transition-opacity">
     <div class="w-12 h-12 border-4 border-indigo-400/30 border-t-indigo-500 rounded-full animate-spin"></div>
     <div class="text-center">
       <p id="loadingMessage" class="text-white text-xs font-black tracking-wide uppercase">Caricamento rapido...</p>
@@ -519,7 +519,7 @@
       <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Avversario</label><input type="text" id="gameOpponent" maxlength="80" placeholder="es. ASD Vicenza" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold"></div>
       <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Campo</label><select id="gameVenue" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold"><option value="Casa">Casa</option><option value="Fuori">Fuori</option></select></div>
       <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Mister presenti</label><div id="gameCoaches" class="max-h-28 overflow-y-auto grid grid-cols-2 gap-1.5 bg-slate-50 border border-slate-200 rounded-xl p-2"></div></div>
-      <div class="flex gap-2 pt-1"><button onclick="closeGameModal()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl text-xs font-bold">Annulla</button><button onclick="saveGame()" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-xs font-bold shadow">Salva</button></div>
+      <div class="flex gap-2 pt-1"><button onclick="closeGameModal()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl text-xs font-bold">Annulla</button><button id="btnSaveGame" onclick="saveGame()" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-xs font-bold shadow">Salva</button></div>
     </div>
   </div>
 
@@ -568,6 +568,21 @@
       document.getElementById('loadingOverlay').classList.add('hidden');
     }
 
+    function setButtonBusy(id, busy, label) {
+      const button = document.getElementById(id);
+      if (!button) return;
+      if (busy) {
+        button.dataset.originalText = button.innerHTML;
+        button.disabled = true;
+        button.classList.add('opacity-70', 'cursor-wait');
+        button.innerHTML = `<span class="inline-flex items-center justify-center gap-1.5"><span class="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>${label}</span>`;
+      } else {
+        button.disabled = false;
+        button.classList.remove('opacity-70', 'cursor-wait');
+        if (button.dataset.originalText) button.innerHTML = button.dataset.originalText;
+      }
+    }
+
     const OFFLINE_QUEUE_KEY = 'cresole80_pending_actions_v1';
     function getOfflineQueue() { try { return JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]'); } catch (_) { return []; } }
     function queueOfflineAction(payload) { const q = getOfflineQueue(); q.push({ payload, createdAt: Date.now() }); localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(q)); }
@@ -576,7 +591,7 @@
       let lastError;
       for (let attempt = 0; attempt < 3; attempt++) {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 12000);
+        const timeout = setTimeout(() => controller.abort(), 20000);
         try {
           const res = await fetch(url, { ...options, signal: controller.signal });
           const text = await res.text();
@@ -584,8 +599,8 @@
           try { return JSON.parse(text); }
           catch (_) { throw new Error('L’endpoint Apps Script non ha restituito dati validi. Verifica URL /exec e distribuzione.'); }
         } catch (error) {
-          lastError = error;
-          const retryable = error.name === 'AbortError' || /\(404\)|\(429\)|\(5\d\d\d\)|Failed to fetch/i.test(error.message || '');
+          lastError = controller.signal.aborted ? new Error('Il server sta impiegando troppo tempo. Riprova tra poco.') : error;
+          const retryable = controller.signal.aborted || /\(404\)|\(429\)|\(5\d\d\d\)|Failed to fetch/i.test(error.message || '');
           if (!retryable || attempt === 2) break;
           await wait(500 * (attempt + 1));
         } finally { clearTimeout(timeout); }
@@ -853,11 +868,21 @@
     async function saveGame() {
       const date = document.getElementById('gameDate').value, opponent = document.getElementById('gameOpponent').value.trim();
       if (!date || !opponent) return alert('Inserisci data e avversario.');
+      setButtonBusy('btnSaveGame', true, 'Salvataggio…');
       showLoading('Salvataggio partita...');
-      const coaches = Array.from(document.querySelectorAll('#gameCoaches input:checked')).map(input => input.value);
-      const data = await postWithOfflineQueue({ action: 'saveGame', id: document.getElementById('gameId').value, team: editingGameTeam, type: document.getElementById('gameType').value, date, time: document.getElementById('gameTime').value, opponent, venue: document.getElementById('gameVenue').value, coaches });
-      hideLoading(); closeGameModal();
-      if (data.status === 'success') await loadCalendarGames(); else if (data.status === 'queued') alert('📴 Partita accodata: sarà sincronizzata quando torna la connessione.'); else alert('Errore: ' + (data.message || 'salvataggio non riuscito'));
+      try {
+        const coaches = Array.from(document.querySelectorAll('#gameCoaches input:checked')).map(input => input.value);
+        const data = await postWithOfflineQueue({ action: 'saveGame', id: document.getElementById('gameId').value, team: editingGameTeam, type: document.getElementById('gameType').value, date, time: document.getElementById('gameTime').value, opponent, venue: document.getElementById('gameVenue').value, coaches });
+        if (data.status === 'success') { closeGameModal(); await loadCalendarGames(); }
+        else if (data.status === 'queued') { closeGameModal(); alert('📴 Partita accodata: sarà sincronizzata quando torna la connessione.'); }
+        else alert('Errore: ' + (data.message || 'salvataggio non riuscito'));
+      } catch (error) {
+        console.error('Cresole80 salvataggio partita', error);
+        alert(error.message || 'Impossibile salvare la partita.');
+      } finally {
+        hideLoading();
+        setButtonBusy('btnSaveGame', false);
+      }
     }
 
     // =========================================================
@@ -1596,6 +1621,7 @@
       const name = document.getElementById('newPlayerName').value.trim();
       if (!name) return alert("Inserisci cognome e nome");
 
+      setButtonBusy('btnConfirmPlayer', true, 'Aggiunta…');
       closePlayerModal();
       showLoading(`Aggiunta ${name}...`);
 
@@ -1613,6 +1639,7 @@
         alert("Errore operazione.");
       } finally {
         hideLoading();
+        setButtonBusy('btnConfirmPlayer', false);
       }
     }
 
@@ -1648,6 +1675,7 @@
       const opponent = document.getElementById('newEventOpponent').value.trim();
       if (isMatchEvent(typeVal) && !opponent) return alert('Per una partita inserisci l’avversario.');
 
+      setButtonBusy('btnConfirmEvent', true, 'Inserimento…');
       closeAddEventModal();
       showLoading("Inserimento seduta...");
 
@@ -1664,6 +1692,7 @@
         alert("Errore inserimento.");
       } finally {
         hideLoading();
+        setButtonBusy('btnConfirmEvent', false);
       }
     }
 
