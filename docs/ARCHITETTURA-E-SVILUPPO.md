@@ -23,7 +23,8 @@ L'app non accede direttamente al foglio: ogni lettura e salvataggio passa dalla 
 | `Esordienti2`, `Pulcini2`, `Pulcini1`, `Primi_Calci`, `Piccoli_Amici` | Elenco atleti e presenze della squadra | Una colonna per ogni evento |
 | `Allenatori` | Elenco allenatori e disponibilità a tutti gli eventi | Non è una squadra e non deve ricevere gare proprie |
 | `Calendario` | Solo Campionato, Amichevole e Torneo delle squadre | È il riepilogo delle gare |
-| `Formazioni_<squadra>_<id gara>` | Formazione per una gara, tempi, piazzati, corner e panchina | Generato dall'app |
+| `Divise` | Taglia, numero maglia e consegna di maglia/pantaloncini/calze | Una pagina suddivisa per squadra |
+| `Formazioni_<squadra>` | Formazione corrente della squadra, tempi, piazzati, corner, panchina e sostituzioni | Generato dall'app |
 | `Log_Sistema` | Errori tecnici | Nascosto, da consultare solo in caso di problemi |
 
 ## Flussi supportati
@@ -32,7 +33,8 @@ L'app non accede direttamente al foglio: ogni lettura e salvataggio passa dalla 
 2. Una partita, amichevole o torneo creato nell'app viene inserito nel foglio della squadra, in `Calendario` e in `Allenatori`.
 3. Una nuova colonna evento creata manualmente nella riga Data e nella riga Tipo del foglio di una squadra viene rilevata dallo script. Se è una gara, viene aggiunta anche al calendario; tutti gli eventi vengono riportati agli allenatori.
 4. Una nuova riga valida aggiunta manualmente in `Calendario` viene riportata nel foglio della relativa squadra e in `Allenatori` alla prima lettura del calendario dall'app.
-5. Le formazioni sono legate all'identificativo della gara e possono includere i quattro tempi, giocatori per calci piazzati, difesa su corner avversario e panchina calcolata automaticamente.
+5. Ogni squadra usa una sola scheda formazioni, aggiornata per la gara successiva. Può contenere quattro o più tempi, giocatori per calci piazzati, difesa su corner avversario, panchina e sostituzioni di metà tempo.
+6. Ogni gara può avere fino a quattro risultati parziali, un esito calcolato sui tempi e una nota. Il calendario conserva esito e nota nello stesso blocco della squadra.
 
 Per gli allenatori, in uno stesso giorno viene conservato un unico evento: la priorità è Campionato, poi Amichevole, poi Torneo, poi Allenamento. In questo modo non ci sono colonne duplicate nel loro foglio.
 

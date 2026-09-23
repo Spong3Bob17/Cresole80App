@@ -45,15 +45,34 @@ L'evento viene riportato automaticamente nel calendario generale, nel foglio del
 
 La pagina degli allenatori visualizza gli eventi di tutte le squadre: allenamenti, partite, amichevoli e tornei. Da lì si consulta il programma; le gare si aggiungono dalla pagina della singola squadra.
 
+## Inserire risultato e nota
+
+1. Aprire Calendario e toccare la gara già creata.
+2. Premere **Risultato e nota**.
+3. Inserire i gol del Cresole e dell'avversario per ogni tempo disputato.
+4. Aggiungere una nota libera, se serve, e salvare.
+
+L'esito è calcolato contando i tempi: più tempi vinti significa `Vinto`, più tempi persi significa `Perso`; in parità è `Pareggiato`. Il foglio `Calendario` mostra il risultato in verde, rosso o giallo e conserva la nota a fianco.
+
+## Gestione divise
+
+1. Selezionare la squadra e aprire **Gestione Divise**.
+2. Inserire taglia e numero di maglia.
+3. Toccare `👕`, `🩳` o `🧦` quando l'articolo è stato consegnato: l'icona diventa verde.
+4. Premere **Salva divise**.
+
+Il foglio `Divise` viene creato automaticamente e contiene tutte le squadre nella stessa pagina. La sezione non è disponibile per gli allenatori.
+
 ## Formazioni
 
 1. Selezionare la squadra e aprire Formazioni.
-2. Scegliere la gara dal calendario.
-3. Compilare i giocatori in campo per ciascun tempo.
+2. Compilare i giocatori in campo per ciascun tempo.
 4. Indicare calci piazzati e difesa su corner avversario: palo, vertice, giocatore alto e contropiede.
 5. Salvare la formazione.
 
-La panchina viene calcolata con i giocatori non schierati in quel tempo. I nomi nei blocchi dei corner e dei piazzati devono essere giocatori effettivamente in campo in quel tempo.
+La panchina viene calcolata con i giocatori non schierati in quel tempo. Tocca un giocatore in panchina per indicare chi sostituirà a metà tempo: sul campetto comparirà `⇄` con il nome di chi entra. I nomi nei blocchi dei corner e dei piazzati devono essere giocatori effettivamente in campo in quel tempo. Se un torneo richiede più tempi, usa il pulsante laterale **Aggiungi Tempo / Campetto**.
+
+Ogni squadra usa un solo foglio, chiamato `Formazioni_<squadra>`. La formazione è quindi quella corrente: prima della gara successiva usa il pulsante di pulizia per preparare la nuova.
 
 ## Come usare il Foglio Google in sicurezza
 
@@ -87,7 +106,7 @@ Per `Campionato`, `Amichevole` e `Torneo`, l'evento verrà riportato nel calenda
 
 ## Inserire manualmente una gara nel foglio Calendario
 
-Compilare una nuova riga con questi campi:
+Inserire una nuova riga normale sotto all'ultimo blocco di squadra (non dentro una riga con il titolo della squadra) e compilare questi campi. Al primo aggiornamento l'app riordina automaticamente la gara nel blocco della squadra corretta:
 
 | Colonna | Valore |
 |---|---|

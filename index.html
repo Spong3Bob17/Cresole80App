@@ -156,6 +156,9 @@
       <button onclick="switchView('calendario'); toggleMenu();" id="navCalendario" class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition text-slate-600 hover:bg-slate-100">
         <span>🗓️</span> Calendario Gare
       </button>
+      <button onclick="switchView('divise'); toggleMenu();" id="navDivise" class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition text-slate-600 hover:bg-slate-100">
+        <span>👕</span> Gestione Divise
+      </button>
     </div>
 
     <!-- STRUMENTI CONTESTUALI -->
@@ -403,6 +406,19 @@
     </main>
   </div>
 
+  <div id="viewDivise" class="hidden">
+    <main class="max-w-6xl mx-auto p-3.5 space-y-3.5">
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Consegna divise</h3>
+        <p id="uniformSubtitle" class="text-[10px] text-slate-400 mt-0.5">Maglia, pantaloncini e calze consegnati</p>
+      </div>
+      <div id="uniformList" class="space-y-2"></div>
+    </main>
+    <div class="fixed bottom-0 left-0 right-0 p-3.5 bg-white/95 backdrop-blur-md border-t border-slate-200 z-20 shadow-xl safe-bottom">
+      <div class="max-w-6xl mx-auto"><button onclick="saveUniforms()" id="btnSaveUniforms" class="w-full bg-indigo-700 hover:bg-indigo-800 active:scale-[0.99] text-white font-extrabold py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2 text-xs tracking-wider uppercase transition">💾 Salva divise</button></div>
+    </div>
+  </div>
+
   <!-- MODAL ASSEGNAZIONE GIOCATORE -->
   <div id="modalAssignPlayer" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-100">
@@ -519,7 +535,18 @@
       <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Avversario</label><input type="text" id="gameOpponent" maxlength="80" placeholder="es. ASD Vicenza" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold"></div>
       <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Campo</label><select id="gameVenue" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold"><option value="Casa">Casa</option><option value="Fuori">Fuori</option></select></div>
       <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Mister presenti</label><div id="gameCoaches" class="max-h-28 overflow-y-auto grid grid-cols-2 gap-1.5 bg-slate-50 border border-slate-200 rounded-xl p-2"></div></div>
+      <button id="btnOpenResult" onclick="openGameResultModal()" class="hidden w-full border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 py-2.5 rounded-xl text-xs font-bold">🏁 Risultato e nota</button>
       <div class="flex gap-2 pt-1"><button onclick="closeGameModal()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl text-xs font-bold">Annulla</button><button id="btnSaveGame" onclick="saveGame()" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-xs font-bold shadow">Salva</button></div>
+    </div>
+  </div>
+
+  <div id="modalGameResult" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-[60] hidden flex items-center justify-center p-3">
+    <div class="bg-white rounded-3xl max-w-sm w-full max-h-[calc(100dvh-24px)] overflow-y-auto p-5 space-y-4 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between"><div><h3 class="text-sm font-extrabold text-slate-900">Risultato gara</h3><p id="resultGameLabel" class="text-[10px] text-slate-400 mt-0.5"></p></div><button onclick="closeGameResultModal()" class="text-slate-400 font-bold p-1">✕</button></div>
+      <div class="rounded-2xl bg-slate-50 border border-slate-200 p-3 space-y-2"><p class="text-[10px] font-bold text-slate-500">Inserisci i gol per ogni tempo disputato. L'esito finale è calcolato sui tempi, non sulla somma dei gol.</p><div id="periodScoreList" class="space-y-2"></div></div>
+      <div id="resultPreview" class="rounded-xl bg-slate-100 p-3 text-center text-xs font-black text-slate-700">Nessun tempo compilato</div>
+      <div><label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Nota</label><textarea id="gameNote" maxlength="500" rows="3" placeholder="Osservazioni sulla partita…" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-indigo-500"></textarea></div>
+      <button id="btnSaveResult" onclick="saveGameResult()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-xs font-bold shadow">Salva risultato e nota</button>
     </div>
   </div>
 
@@ -539,6 +566,8 @@
     let calendarGames = [];
     let calendarCoaches = [];
     let editingGameTeam = "";
+    let editingGame = null;
+    let uniformData = [];
     let viewRequestId = 0;
     let selectedSubstitute = "";
     let matchLineups = {
@@ -681,10 +710,12 @@
       const viewForm = document.getElementById('viewFormazioni');
       const viewStat = document.getElementById('viewStatistiche');
       const viewCalendar = document.getElementById('viewCalendario');
+      const viewUniforms = document.getElementById('viewDivise');
       const navPres = document.getElementById('navPresenze');
       const navForm = document.getElementById('navFormazioni');
       const navStat = document.getElementById('navStatistiche');
       const navCalendar = document.getElementById('navCalendario');
+      const navUniforms = document.getElementById('navDivise');
       const title = document.getElementById('activeModuleTitle');
 
       const toolsPres = document.getElementById('drawerToolsPresenze');
@@ -692,8 +723,8 @@
       const toolsStat = document.getElementById('drawerToolsStatistiche');
       const toolsCalendar = document.getElementById('drawerToolsCalendario');
 
-      [viewPres, viewForm, viewStat, viewCalendar].forEach(v => v.classList.add('hidden'));
-      [navPres, navForm, navStat, navCalendar].forEach(n => n.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition text-slate-600 hover:bg-slate-100");
+      [viewPres, viewForm, viewStat, viewCalendar, viewUniforms].forEach(v => v.classList.add('hidden'));
+      [navPres, navForm, navStat, navCalendar, navUniforms].forEach(n => n.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition text-slate-600 hover:bg-slate-100");
       [toolsPres, toolsForm, toolsStat, toolsCalendar].forEach(t => t.classList.add('hidden'));
 
       if (viewName === 'formazioni') {
@@ -720,6 +751,18 @@
         if (currentTeam !== 'Allenatori') toolsCalendar.classList.remove('hidden');
         clearViewContent('calendario');
         await loadCalendarGames(requestId);
+      } else if (viewName === 'divise') {
+        viewUniforms.classList.remove('hidden');
+        navUniforms.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900";
+        title.innerText = "Divise";
+        if (currentTeam === 'Allenatori') {
+          document.getElementById('uniformList').innerHTML = '<div class="bg-amber-50 border border-amber-200 p-5 rounded-2xl text-center text-xs font-bold text-amber-800">La gestione divise è disponibile solo per le squadre.</div>';
+          document.getElementById('btnSaveUniforms').classList.add('hidden');
+        } else {
+          document.getElementById('btnSaveUniforms').classList.remove('hidden');
+          clearViewContent('divise');
+          await loadUniforms(requestId);
+        }
       } else {
         viewPres.classList.remove('hidden');
         navPres.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900";
@@ -745,6 +788,8 @@
       } else if (viewName === 'formazioni') {
         document.getElementById('pitchSlotsContainer').innerHTML = '<div class="h-full flex items-center justify-center text-xs font-bold text-white/80">Caricamento formazione…</div>';
         document.getElementById('benchList').innerHTML = '';
+      } else if (viewName === 'divise') {
+        document.getElementById('uniformList').innerHTML = '<div class="bg-white p-5 rounded-2xl text-center text-xs text-slate-400 border border-slate-200">Caricamento divise…</div>';
       }
     }
 
@@ -754,6 +799,7 @@
       if (viewName === 'presenze') document.getElementById('playerList').innerHTML = `<div class="bg-rose-50 border border-rose-200 p-5 rounded-2xl text-center text-xs font-bold text-rose-700">${safe}</div>`;
       if (viewName === 'statistiche') document.getElementById('generalStatsList').innerHTML = `<div class="bg-rose-50 border border-rose-200 p-5 rounded-2xl text-center text-xs font-bold text-rose-700">${safe}</div>`;
       if (viewName === 'formazioni') document.getElementById('pitchSlotsContainer').innerHTML = `<div class="h-full flex items-center justify-center text-xs font-bold text-rose-100 text-center px-6">${safe}</div>`;
+      if (viewName === 'divise') document.getElementById('uniformList').innerHTML = `<div class="bg-rose-50 border border-rose-200 p-5 rounded-2xl text-center text-xs font-bold text-rose-700">${safe}</div>`;
     }
 
     // CARICAMENTO SEPARATO (CHIEDE SOLO I DATI DELLA SCHEDA CORRENTE + TIMESTAMP ANTI-CACHE)
@@ -829,6 +875,36 @@
       finally { hideLoading(); }
     }
 
+    async function loadUniforms(requestId = ++viewRequestId) {
+      const requestedTeam = currentTeam;
+      showLoading('Caricamento divise...');
+      try {
+        const data = await fetchJson(`${API_URL}?team=${encodeURIComponent(currentTeam)}&mode=divise&_t=${Date.now()}`, { mode: 'cors' });
+        if (!isActiveRequest(requestId, 'divise') || requestedTeam !== currentTeam) return;
+        if (data.status !== 'success') throw new Error(data.message || 'Divise non disponibili');
+        uniformData = data.uniforms || [];
+        renderUniforms();
+      } catch (error) {
+        console.error('Cresole80 divise', error);
+        if (isActiveRequest(requestId, 'divise') && requestedTeam === currentTeam) showViewError('divise', error.message || 'Impossibile caricare le divise.');
+      } finally { hideLoading(); }
+    }
+
+    function renderUniforms() {
+      document.getElementById('uniformSubtitle').innerText = document.getElementById('teamSelect').selectedOptions[0].text;
+      const list = document.getElementById('uniformList'); list.innerHTML = '';
+      if (!uniformData.length) { list.innerHTML = '<div class="bg-white p-5 rounded-2xl text-center text-xs text-slate-400 border border-slate-200">Nessun atleta in rosa.</div>'; return; }
+      uniformData.forEach((uniform, index) => {
+        const card = document.createElement('div'); card.className = 'bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs space-y-3';
+        const toggle = (field, icon, label) => `<button onclick="toggleUniform(${index}, '${field}')" title="${label}" class="h-10 rounded-xl text-base font-black border transition ${uniform[field] ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-400'}">${icon}</button>`;
+        card.innerHTML = `<div class="flex items-center justify-between gap-3"><span class="min-w-0 text-xs font-black text-slate-800 truncate">${escapeHtml(uniform.player)}</span><div class="grid grid-cols-2 gap-2 w-32"><input value="${escapeHtml(uniform.size || '')}" maxlength="10" oninput="setUniformText(${index}, 'size', this.value)" placeholder="Taglia" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-center outline-none focus:ring-2 focus:ring-indigo-500"><input value="${escapeHtml(uniform.number || '')}" maxlength="3" inputmode="numeric" oninput="setUniformText(${index}, 'number', this.value)" placeholder="N°" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-center outline-none focus:ring-2 focus:ring-indigo-500"></div></div><div class="grid grid-cols-3 gap-2">${toggle('shirt', '👕', 'Maglia consegnata')}${toggle('shorts', '🩳', 'Pantaloncini consegnati')}${toggle('socks', '🧦', 'Calze consegnate')}</div>`;
+        list.appendChild(card);
+      });
+    }
+    function toggleUniform(index, field) { uniformData[index][field] = !uniformData[index][field]; renderUniforms(); }
+    function setUniformText(index, field, value) { uniformData[index][field] = value; }
+    async function saveUniforms() { setButtonBusy('btnSaveUniforms', true, 'Salvataggio…'); showLoading('Salvataggio divise...'); try { const data = await postWithOfflineQueue({ action: 'saveUniforms', team: currentTeam, uniforms: uniformData }); if (data.status === 'success') { alert('✅ Divise aggiornate.'); await loadUniforms(); } else if (data.status === 'queued') alert('📴 Divise accodate: saranno sincronizzate al ritorno della connessione.'); else alert('Errore: ' + (data.message || 'salvataggio non riuscito')); } catch (error) { alert(error.message || 'Impossibile salvare le divise.'); } finally { hideLoading(); setButtonBusy('btnSaveUniforms', false); } }
+
     function renderCalendar() {
       const allTeams = currentTeam === 'Allenatori';
       document.getElementById('calendarSubtitle').innerText = allTeams ? 'Tutte le squadre' : document.getElementById('teamSelect').selectedOptions[0].text;
@@ -841,13 +917,17 @@
         const type = game.type || 'Campionato';
         const typeStyle = type === 'Campionato' ? 'bg-violet-100 text-violet-800' : type === 'Amichevole' ? 'bg-fuchsia-100 text-fuchsia-800' : 'bg-amber-100 text-amber-800';
         const coaches = (game.coaches || []).length ? escapeHtml(game.coaches.join(', ')) : 'Mister da definire';
+        const outcome = String(game.result || '').split(' · ')[0];
+        const resultStyle = outcome === 'Vinto' ? 'text-emerald-700' : outcome === 'Perso' ? 'text-rose-700' : 'text-amber-700';
+        const result = game.result ? `<div class="mt-2 text-[10px] font-black ${resultStyle}">🏁 ${escapeHtml(game.result)}</div>` : '';
         card.setAttribute('aria-label', `${type}, ${game.date} ${game.time || ''}, ${game.venue}, ${game.opponent || ''}`);
-        card.innerHTML = `<div class="flex items-start justify-between gap-3"><div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><span class="text-[10px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full ${typeStyle}">${escapeHtml(type)}</span>${allTeams ? `<span class="text-[10px] font-bold text-slate-500">${escapeHtml(game.team)}</span>` : ''}</div><div class="mt-3 flex items-baseline gap-2 text-slate-900"><span class="text-lg font-black tracking-tight">${escapeHtml(game.date)}</span>${game.time ? `<span class="text-sm font-extrabold text-indigo-700">${escapeHtml(game.time)}</span>` : ''}</div><div class="mt-2 text-xs font-bold text-slate-600 truncate">vs ${escapeHtml(game.opponent || 'Avversario da definire')}</div><div class="mt-2 text-[10px] text-slate-400 truncate">Mister: ${coaches}</div></div><span title="${escapeHtml(game.venue)}" class="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg ${game.venue === 'Casa' ? 'bg-emerald-50' : 'bg-indigo-50'}">${icon}</span></div>`;
+        card.innerHTML = `<div class="flex items-start justify-between gap-3"><div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><span class="text-[10px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full ${typeStyle}">${escapeHtml(type)}</span>${allTeams ? `<span class="text-[10px] font-bold text-slate-500">${escapeHtml(game.team)}</span>` : ''}</div><div class="mt-3 flex items-baseline gap-2 text-slate-900"><span class="text-lg font-black tracking-tight">${escapeHtml(game.date)}</span>${game.time ? `<span class="text-sm font-extrabold text-indigo-700">${escapeHtml(game.time)}</span>` : ''}</div><div class="mt-2 text-xs font-bold text-slate-600 truncate">vs ${escapeHtml(game.opponent || 'Avversario da definire')}</div>${result}<div class="mt-2 text-[10px] text-slate-400 truncate">Mister: ${coaches}</div></div><span title="${escapeHtml(game.venue)}" class="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg ${game.venue === 'Casa' ? 'bg-emerald-50' : 'bg-indigo-50'}">${icon}</span></div>`;
         list.appendChild(card);
       });
     }
     function escapeHtml(value) { const div = document.createElement('div'); div.innerText = value || ''; return div.innerHTML; }
     function openGameModal(game = null) {
+      editingGame = game;
       editingGameTeam = game?.team || currentTeam;
       document.getElementById('gameModalTitle').innerText = game ? 'Modifica partita' : 'Nuova partita';
       document.getElementById('gameId').value = game?.id || '';
@@ -856,6 +936,7 @@
       document.getElementById('gameType').value = game?.type || 'Campionato';
       document.getElementById('gameOpponent').value = game?.opponent || '';
       document.getElementById('gameVenue').value = game?.venue || 'Casa';
+      document.getElementById('btnOpenResult').classList.toggle('hidden', !game?.id);
       renderCoachChoices(game?.coaches || []);
       document.getElementById('modalGame').classList.remove('hidden');
     }
@@ -865,6 +946,36 @@
       calendarCoaches.forEach(name => { const label=document.createElement('label'); label.className='flex items-center gap-1.5 text-[10px] font-bold text-slate-700'; const input=document.createElement('input'); input.type='checkbox'; input.value=name; input.checked=selected.includes(name); input.className='accent-indigo-600'; label.append(input,document.createTextNode(name)); container.appendChild(label); });
     }
     function closeGameModal() { document.getElementById('modalGame').classList.add('hidden'); }
+
+    function parseGameResult(result) {
+      const parts = String(result || '').split(' · ');
+      const scores = parts.slice(1).join(' · ').split('|').map(x => x.trim()).filter(Boolean).map(score => { const p = score.split('-').map(Number); return Number.isInteger(p[0]) && Number.isInteger(p[1]) ? { team: p[0], opponent: p[1] } : null; }).filter(Boolean);
+      return scores;
+    }
+    function openGameResultModal() {
+      if (!editingGame?.id) return;
+      document.getElementById('resultGameLabel').innerText = `${editingGame.date} · ${editingGame.opponent || 'Avversario'}`;
+      const scores = parseGameResult(editingGame.result);
+      const list = document.getElementById('periodScoreList'); list.innerHTML = '';
+      for (let i = 0; i < 4; i++) {
+        const score = scores[i] || {};
+        const row = document.createElement('div'); row.className = 'grid grid-cols-[auto_1fr_auto_1fr] items-center gap-2';
+        row.innerHTML = `<span class="text-[10px] font-black text-slate-500">${i + 1}° T</span><input data-score-team="${i}" type="number" min="0" max="99" inputmode="numeric" value="${Number.isInteger(score.team) ? score.team : ''}" oninput="updateResultPreview()" class="w-full border border-slate-200 bg-white rounded-lg p-2 text-center text-xs font-black"><span class="text-slate-400">-</span><input data-score-opponent="${i}" type="number" min="0" max="99" inputmode="numeric" value="${Number.isInteger(score.opponent) ? score.opponent : ''}" oninput="updateResultPreview()" class="w-full border border-slate-200 bg-white rounded-lg p-2 text-center text-xs font-black">`;
+        list.appendChild(row);
+      }
+      document.getElementById('gameNote').value = editingGame.note || '';
+      updateResultPreview();
+      document.getElementById('modalGameResult').classList.remove('hidden');
+    }
+    function closeGameResultModal() { document.getElementById('modalGameResult').classList.add('hidden'); }
+    function collectPeriodScores() {
+      const scores = [];
+      for (let i = 0; i < 4; i++) { const team = document.querySelector(`[data-score-team="${i}"]`).value, opponent = document.querySelector(`[data-score-opponent="${i}"]`).value; if (team === '' && opponent === '') continue; if (team === '' || opponent === '') return null; scores.push({ team: Number(team), opponent: Number(opponent) }); }
+      return scores;
+    }
+    function calculateResultPreview(scores) { if (!scores?.length) return { outcome: '', text: 'Nessun tempo compilato' }; let won = 0, lost = 0; scores.forEach(score => { if (score.team > score.opponent) won++; if (score.team < score.opponent) lost++; }); const outcome = won > lost ? 'Vinto' : lost > won ? 'Perso' : 'Pareggiato'; return { outcome, text: `${outcome} · ${scores.map(s => `${s.team}-${s.opponent}`).join(' | ')}` }; }
+    function updateResultPreview() { const scores = collectPeriodScores(); const preview = document.getElementById('resultPreview'); if (scores === null) { preview.innerText = 'Completa entrambi i punteggi del tempo'; return; } const result = calculateResultPreview(scores); preview.innerText = result.text; preview.className = `rounded-xl p-3 text-center text-xs font-black ${result.outcome === 'Vinto' ? 'bg-emerald-50 text-emerald-700' : result.outcome === 'Perso' ? 'bg-rose-50 text-rose-700' : result.outcome === 'Pareggiato' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-700'}`; }
+    async function saveGameResult() { const scores = collectPeriodScores(); if (scores === null || !scores.length) return alert('Inserisci almeno un tempo completo.'); setButtonBusy('btnSaveResult', true, 'Salvataggio…'); try { const data = await postWithOfflineQueue({ action: 'saveGameResult', team: editingGame.team, id: editingGame.id, periods: scores, note: document.getElementById('gameNote').value.trim() }); if (data.status === 'success') { closeGameResultModal(); closeGameModal(); await loadCalendarGames(); } else alert('Errore: ' + (data.message || 'salvataggio non riuscito')); } catch (error) { alert(error.message || 'Impossibile salvare il risultato.'); } finally { setButtonBusy('btnSaveResult', false); } }
     async function saveGame() {
       const date = document.getElementById('gameDate').value, opponent = document.getElementById('gameOpponent').value.trim();
       if (!date || !opponent) return alert('Inserisci data e avversario.');
