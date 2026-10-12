@@ -67,12 +67,14 @@ Il foglio `Divise` viene creato automaticamente e contiene tutte le squadre nell
 
 1. Selezionare la squadra e aprire Formazioni.
 2. Compilare i giocatori in campo per ciascun tempo.
-4. Indicare calci piazzati e difesa su corner avversario: palo, vertice, giocatore alto e contropiede.
+4. Indicare calci piazzati e difesa su corner avversario: palo, vertice e contropiede.
 5. Salvare la formazione.
 
 La panchina viene calcolata con i giocatori non schierati in quel tempo. Tocca un giocatore in panchina per indicare chi sostituirà a metà tempo: sul campetto comparirà `⇄` con il nome di chi entra. I nomi nei blocchi dei corner e dei piazzati devono essere giocatori effettivamente in campo in quel tempo. Se un torneo richiede più tempi, usa il pulsante laterale **Aggiungi Tempo / Campetto**.
 
-Ogni squadra usa un solo foglio, chiamato `Formazioni_<squadra>`. La formazione è quindi quella corrente: prima della gara successiva usa il pulsante di pulizia per preparare la nuova.
+Ogni squadra usa un foglio fisso, chiamato `Formazioni_<squadra>`. Per i 2017 ci sono due fogli distinti e fissi, `Formazioni_Pulcini1_A` e `Formazioni_Pulcini1_B`. La formazione è quella corrente: prima della gara successiva usa il pulsante di pulizia per preparare la nuova.
+
+Nella sezione **Giocatori disponibili / convocati** puoi selezionare gli atleti utilizzabili per la formazione corrente, senza modificare presenze o statistiche. Per i 2017, il selettore A/B mantiene separate le due formazioni. Vedi la [guida a 2017 A/B e convocati](2017-A-B-E-CONVOCATI.md) per assegnare le gare esistenti, utilizzare le checkbox nel foglio e riparare le vecchie copie.
 
 ## Come usare il Foglio Google in sicurezza
 
@@ -81,7 +83,7 @@ Ogni squadra usa un solo foglio, chiamato `Formazioni_<squadra>`. La formazione 
 - Inserire o aggiornare lo stato di presenza nelle celle degli atleti.
 - Aggiungere un atleta inserendo una riga immediatamente **sopra** la riga `Assenti`, mantenendo formati e convalide della riga precedente.
 - Creare manualmente un evento di una squadra aggiungendo una nuova colonna prima delle colonne `Tot.`: data nella riga 1 e tipo nella riga 2.
-- Aggiungere una nuova gara nel foglio `Calendario` compilando squadra, tipo, data, ora, avversario, campo e mister. Lasciare vuota la colonna ID: l'app la genera automaticamente.
+- Aggiungere una nuova gara nel foglio `Calendario` compilando squadra, tipo, data, ora, avversario, campo e mister. Lasciare vuota la colonna ID: la manutenzione la genera automaticamente.
 - Compilare le celle della formazione e usare le tendine già presenti.
 
 ### Non modificare
@@ -106,7 +108,7 @@ Per `Campionato`, `Amichevole` e `Torneo`, l'evento verrà riportato nel calenda
 
 ## Inserire manualmente una gara nel foglio Calendario
 
-Inserire una nuova riga normale sotto all'ultimo blocco di squadra (non dentro una riga con il titolo della squadra) e compilare questi campi. Al primo aggiornamento l'app riordina automaticamente la gara nel blocco della squadra corretta:
+Inserire una nuova riga normale sotto all'ultimo blocco di squadra (non dentro una riga con il titolo della squadra) e compilare questi campi. Con la manutenzione attiva, la gara viene riordinata automaticamente nel blocco della squadra corretta, per data e ora:
 
 | Colonna | Valore |
 |---|---|
@@ -117,8 +119,30 @@ Inserire una nuova riga normale sotto all'ultimo blocco di squadra (non dentro u
 | Avversario | Nome della squadra avversaria |
 | Campo | `Casa` oppure `Fuori` |
 | Mister | Uno o più nomi presenti nel foglio `Allenatori`, separati da virgola |
+| Gruppo | Solo per `Pulcini1`: `A`, `B` oppure vuoto se da assegnare |
 
-Non compilare né rendere visibile la colonna ID. Dopo il primo aggiornamento dell'app, l'evento viene propagato alla squadra e agli allenatori.
+Non compilare né rendere visibile la colonna ID. Dopo aver terminato l'inserimento, attendere circa 1–2 minuti: la manutenzione mette in ordine il calendario e aggiunge l'evento alla squadra e agli allenatori, anche senza aprire l'app. Se una riga è incompleta, rimane visibile nella sezione `DA COMPLETARE — dati conservati`: completarla lì e attendere il prossimo riordino.
+
+Se una categoria ha due partite nello stesso giorno, inserire due righe distinte con i rispettivi avversari e orari. Per i 2017 compilare anche il Gruppo A/B. Entrambe vengono conservate, con i propri mister, risultati e note. Per i nuovi eventi il foglio delle presenze riutilizza una sola colonna per categoria e giorno; per gli allenatori rimane il riepilogo giornaliero. Le copie vecchie non vengono unite silenziosamente: usare l'anteprima duplicati.
+
+## Attivare il calendario ordinato automaticamente (una sola volta)
+
+1. Incollare e salvare il backend aggiornato in Apps Script e distribuire una nuova versione della Web App.
+2. Ricaricare il Foglio Google.
+3. Aprire `Amministrazione Cresole 80 → Sistema Calendario e attiva manutenzione`.
+4. Completare l'autorizzazione Google richiesta alla prima attivazione.
+
+Il comando riordina le gare presenti mantenendo tutti i dati, salva una copia iniziale e attiva il riordino automatico per gli inserimenti successivi. Ogni squadra resta separata dalle altre con due righe vuote. Le righe usano tutte lo stesso stile; i colori distinguono il tipo di evento e l'esito. I backup sono tre fogli nascosti di numero fisso, consultabili dall'amministratore dal menu dei fogli nascosti.
+
+## Rimettere in ordine eventi inseriti a mano (solo amministratore)
+
+Se sono state aggiunte più date manualmente in fogli diversi, usare il menu in alto del Foglio Google `Amministrazione Cresole 80`:
+
+1. Scegliere `Anteprima sincronizzazione completa`.
+2. Leggere il nuovo foglio `Controllo_Sincronizzazione`: indica cosa verrebbe aggiunto e gli eventuali duplicati da controllare.
+3. Solo se il prospetto è corretto, scegliere `Applica correzioni mancanti` e confermare.
+
+La sincronizzazione aggiunge soltanto eventi mancanti tra i fogli squadra, il calendario gare e gli allenatori. Non cancella nulla e non modifica presenze, risultati, note, avversari, orari o mister. Le righe `GARE CONCOMITANTI` sono informazioni: più partite nello stesso giorno restano separate e non richiedono una correzione. I duplicati nelle presenze vanno valutati a mano.
 
 ## In caso di problema
 

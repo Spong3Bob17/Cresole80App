@@ -6,6 +6,7 @@ Applicazione web per organizzare presenze, calendario, partite e formazioni dell
 
 - [Architettura e sviluppo](docs/ARCHITETTURA-E-SVILUPPO.md): struttura, regole tecniche, sicurezza, distribuzione e attività ancora aperte.
 - [Guida operativa](docs/GUIDA-UTENTE.md): uso dell'app e dei Fogli Google, con le modifiche consentite e quelle da non fare.
+- [2017 A/B, convocati e duplicati](docs/2017-A-B-E-CONVOCATI.md): attivazione, assegnazione delle gare esistenti e selezione dei giocatori per le formazioni.
 
 ## Struttura della repository
 
