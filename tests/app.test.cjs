@@ -7,22 +7,33 @@ const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
 const source = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(match => match[1]).find(code => code.includes('let currentTeam'));
 
 class Element {
-  constructor() { this.children = []; this.dataset = {}; this.value = ''; this.selectedOptions = [{ text: 'Categoria' }]; this.classList = { add() {}, remove() {}, toggle() {} }; }
+  constructor(tag = '') {
+    this.tagName = tag.toUpperCase(); this.children = []; this.dataset = {}; this.value = ''; this.disabled = false;
+    this.selectedOptions = [{ text: 'Categoria' }]; const classes = new Set();
+    this.classList = { add: name => classes.add(name), remove: name => classes.delete(name), contains: name => classes.has(name), toggle(name, force) { const enabled = force ?? !classes.has(name); if (enabled) classes.add(name); else classes.delete(name); return enabled; } };
+  }
   set innerHTML(value) { this.content = value; this.children = []; }
   get innerHTML() { return this.content || this.textContent || ''; }
-  set innerText(value) { this.textContent = value; }
-  get innerText() { return this.textContent || ''; }
+  set innerText(value) { this.textContent = String(value); }
+  get innerText() { return this.textContent ?? ''; }
   append(...items) { this.children.push(...items); }
   appendChild(item) { this.children.push(item); }
   prepend(item) { this.children.unshift(item); }
   setAttribute() {}
+  focus() { this.focused = true; }
+  click() { if (!this.disabled) this.onclick?.(); }
 }
 function app() {
   const nodes = new Map(), storage = new Map(), alerts = [], posted = [];
   const document = {
     getElementById(id) { if (!nodes.has(id)) nodes.set(id, new Element()); return nodes.get(id); },
-    createElement: () => new Element(), createTextNode: text => ({ textContent: text }),
-    querySelectorAll: () => []
+    createElement: tag => new Element(tag), createTextNode: text => ({ textContent: text }),
+    querySelectorAll(selector) {
+      const descendants = node => (node.children || []).flatMap(child => [child, ...descendants(child)]);
+      if (selector.startsWith('#callupOptions input')) return descendants(document.getElementById('callupOptions')).filter(node => node.tagName === 'INPUT' && (!selector.includes(':checked') || node.checked));
+      if (selector.includes('#btnSaveLineup')) return [document.getElementById('btnSaveLineup'), ...descendants(document.getElementById('callupOptions'))].filter(node => node.tagName === 'INPUT' || node === document.getElementById('btnSaveLineup'));
+      return [];
+    }
   };
   const context = vm.createContext({ document, console, URLSearchParams, Date, Map, Set, setTimeout, clearTimeout, AbortController,
     window: { location: { search: '' }, crypto: { randomUUID: () => 'operation-test-123456' } },
@@ -31,7 +42,9 @@ function app() {
   });
   vm.runInContext(source, context);
   context.fetchJson = async (url, options) => { if (options?.body) posted.push(JSON.parse(options.body)); return { status: 'success' }; };
-  return { context, document, nodes, storage, alerts, posted, run: code => vm.runInContext(code, context) };
+  const run = code => vm.runInContext(code, context);
+  const clickInline = handler => { const found = [...html.matchAll(/\bonclick="([^"]+)"/g)].find(match => match[1] === handler); assert.ok(found, `Pulsante HTML presente: ${handler}`); return run(found[1]); };
+  return { context, document, nodes, storage, alerts, posted, run, clickInline };
 }
 
 test('Tutti i gestori dichiarati nei pulsanti e nei selettori esistono', () => {
@@ -97,7 +110,142 @@ test('Il salvataggio è bloccato finché la rosa non è stata caricata', async (
 
 test('Applicare i convocati rimuove solo le assegnazioni escluse, senza toccare presenze', () => {
   const { context, document, run } = app();
-  run("formationReady=true;formationRosterReady=true;appData={players:[{name:'Mario'},{name:'Luca'}],attendanceMap:{giorno:{Mario:'Presente'}}};matchLineups=normalizeClientLineup({tempo1:{titolari:{POR:'Mario',PUNTA:'Luca'}}});");
-  document.querySelectorAll = () => [{ value: 'Mario' }]; context.renderPitch = () => {};
-  context.applyCallupSelection(); assert.equal(run('matchLineups.tempo1.titolari.POR'), 'Mario'); assert.equal(run('matchLineups.tempo1.titolari.PUNTA'), undefined); assert.equal(run('appData.attendanceMap.giorno.Mario'), 'Presente');
+  run("currentModule='formazioni';formationReady=true;formationRosterReady=true;loadedFormationKey=formationKey();appData={players:[{name:'Mario'},{name:'Luca'}],attendanceMap:{giorno:{Mario:'Presente'}}};matchLineups=normalizeClientLineup({tempo1:{titolari:{POR:'Mario',PUNTA:'Luca'}}});");
+  context.renderPitch(); document.querySelectorAll('#callupOptions input').find(input => input.value === 'Luca').checked = false;
+  context.applyCallupSelection(); context.confirmFormationAction();
+  assert.equal(run('matchLineups.tempo1.titolari.POR'), 'Mario'); assert.equal(run('matchLineups.tempo1.titolari.PUNTA'), undefined); assert.equal(run('appData.attendanceMap.giorno.Mario'), 'Presente');
+});
+
+const fixtureLineup = { tempo1: { titolari: { POR: 'Mario', PUNTA: 'Luca' }, piazzati: { angoli: 'Luca' }, difesaCorner: { palo: 'Luca' }, sostituzioni: { POR: { out: 'Mario', in: 'Anna' }, legacy: null } }, tempo2: { titolari: { POR: 'Anna' } }, convocati: null };
+function mockFormationApi(instance, overrides = {}) {
+  instance.context.fetchJson = async (url, options) => {
+    if (options?.body) { instance.posted.push(JSON.parse(options.body)); return { status: 'success' }; }
+    const mode = new URL(url).searchParams.get('mode');
+    if (overrides[mode]) return overrides[mode](url);
+    if (mode === 'presenze') return { status: 'success', players: ['Mario','Luca','Anna','Paolo'].map(name => ({ name })), events: [], attendanceMap: { giorno: { Mario: 'Presente' } } };
+    if (mode === 'formazioni') return { status: 'success', lineups: JSON.parse(JSON.stringify(fixtureLineup)) };
+    if (mode === 'calendario') return { status: 'success', games: [] };
+    throw new Error('Richiesta imprevista');
+  };
+}
+async function loadedFormation() { const instance = app(); mockFormationApi(instance); await instance.context.switchView('formazioni'); return instance; }
+
+test('Caricamento reale dei gestori e rendering: pulsanti pronti, campetto, panchina e 4 tempi', async () => {
+  const { document, run } = await loadedFormation();
+  assert.equal(run('formationEditable()'), true);
+  assert.equal(document.getElementById('btnSaveLineup').disabled, false);
+  assert.ok(document.getElementById('pitchSlotsContainer').children.length > 0);
+  assert.equal(document.getElementById('tempoTabs').children.length, 4);
+  assert.equal(document.querySelectorAll('#callupOptions input:checked').length, 4);
+  assert.equal(document.getElementById('benchList').children.length, 2);
+});
+
+test('Le spunte resistono al cambio tempo; Applica apre la conferma interna anche con confirm del browser bloccato', async () => {
+  const { context, document, run, clickInline } = await loadedFormation(); context.confirm = () => false;
+  document.querySelectorAll('#callupOptions input').find(input => input.value === 'Luca').checked = false;
+  document.getElementById('tempoTabs').children[1].click();
+  assert.equal(document.querySelectorAll('#callupOptions input').find(input => input.value === 'Luca').checked, false);
+  clickInline('applyCallupSelection()');
+  assert.equal(document.getElementById('modalFormationAction').classList.contains('hidden'), false);
+  assert.equal(run('matchLineups.tempo1.titolari.PUNTA'), 'Luca');
+  clickInline('confirmFormationAction()');
+  assert.equal(run('matchLineups.convocati.join(",")'), 'Mario,Anna,Paolo');
+  assert.equal(run('matchLineups.tempo1.titolari.PUNTA'), undefined);
+  assert.equal(run('matchLineups.tempo1.piazzati.angoli'), undefined);
+  assert.equal(run('matchLineups.tempo1.difesaCorner.palo'), undefined);
+  assert.equal(run('matchLineups.tempo1.sostituzioni.legacy'), undefined);
+  assert.equal(run('appData.attendanceMap.giorno.Mario'), 'Presente');
+  assert.ok(document.getElementById('formationStatus').innerText.includes('3 giocatori applicati'));
+});
+
+test('Annullare Applica conserva tutte le assegnazioni; lista vuota e rosa completa funzionano', async () => {
+  const { context, run, document, clickInline } = await loadedFormation(); const before = run('JSON.stringify(matchLineups)');
+  clickInline('selectCallupChecks(false)'); clickInline('applyCallupSelection()'); clickInline('closeFormationAction()');
+  assert.equal(run('JSON.stringify(matchLineups)'), before);
+  clickInline('applyCallupSelection()'); clickInline('confirmFormationAction()');
+  assert.equal(run('availableFormationPlayers().length'), 0);
+  assert.equal(document.getElementById('countBench').innerText, '0');
+  assert.equal(run('Object.keys(matchLineups.tempo1.titolari).length'), 0);
+  clickInline('useFullRoster()'); assert.equal(run('availableFormationPlayers().length'), 4);
+  assert.equal(document.querySelectorAll('#callupOptions input:checked').length, 4);
+  context.selectCallupChecks(true); context.applyCallupSelection(); assert.equal(run('matchLineups.convocati.length'), 4);
+});
+
+test('Svuota: annullamento sicuro e conferma senza dialoghi nativi; altri tempi e convocati invariati', async () => {
+  const { context, run, clickInline, document } = await loadedFormation(); context.confirm = () => false;
+  run("matchLineups.convocati=['Mario','Luca','Anna'];"); const other = run('JSON.stringify(matchLineups.tempo2)');
+  clickInline('clearCurrentTempoFormation()'); clickInline('closeFormationAction()'); assert.equal(run('matchLineups.tempo1.titolari.POR'), 'Mario');
+  clickInline('clearCurrentTempoFormation(); toggleMenu();'); clickInline('confirmFormationAction()');
+  for (const field of ['titolari','piazzati','difesaCorner','sostituzioni']) assert.equal(run(`Object.keys(matchLineups.tempo1.${field}).length`), 0);
+  assert.equal(run('JSON.stringify(matchLineups.tempo2)'), other); assert.equal(run('matchLineups.convocati.length'), 3);
+  assert.equal(document.getElementById('countBench').innerText, '3');
+});
+
+test('Aggiungi tempo, assegna/rimuovi un titolare, prestito e salvataggio conservano le modifiche', async () => {
+  const { context, run, clickInline, document, posted } = await loadedFormation();
+  clickInline('addTempo(); toggleMenu();'); assert.equal(run('currentActiveTempo'), 'tempo5'); assert.equal(document.getElementById('tempoTabs').children.length, 5);
+  run("currentAssignSlot='POR'"); context.assignPlayerToRole('Mario'); assert.equal(run('matchLineups.tempo5.titolari.POR'), 'Mario');
+  clickInline('assignPlayerToRole(null)'); assert.equal(run('matchLineups.tempo5.titolari.POR'), undefined);
+  context.openGuestPlayerModal(); document.getElementById('guestPlayerName').value = 'Ospite Prova'; context.confirmAddGuestPlayer();
+  assert.equal(run('availableFormationPlayers().includes("Ospite Prova")'), true);
+  await clickInline('saveLineupToServer()'); assert.equal(posted.length, 1); assert.equal(posted[0].action, 'saveLineup'); assert.ok(posted[0].lineup.tempo5); assert.deepEqual(posted[0].lineup.prestiti, ['Ospite Prova']);
+});
+
+test('Calendario lento: formazione utilizzabile appena rosa e campetto sono pronti', async () => {
+  const instance = app(); let finishCalendar;
+  mockFormationApi(instance, { calendario: () => new Promise(resolve => { finishCalendar = resolve; }) });
+  await instance.context.switchView('formazioni');
+  assert.equal(instance.run('formationEditable()'), true); instance.context.addTempo(); assert.equal(instance.run('tempoKeys().length'), 5);
+  finishCalendar({ status: 'success', games: [] }); await Promise.resolve();
+});
+
+test('Rosa o formazione non valide: messaggio e retry, niente pulsanti apparentemente funzionanti', async () => {
+  for (const mode of ['presenze','formazioni']) {
+    const instance = app(); mockFormationApi(instance, { [mode]: async () => ({ status: 'success' }) }); await instance.context.switchView('formazioni');
+    assert.equal(instance.run('formationEditable()'), false); assert.equal(instance.document.getElementById('btnSaveLineup').disabled, true);
+    assert.equal(instance.document.getElementById('btnRetryFormation').classList.contains('hidden'), false);
+    const before = instance.run('JSON.stringify(matchLineups)'); instance.context.addTempo(); instance.context.clearCurrentTempoFormation(); instance.context.applyCallupSelection();
+    assert.equal(instance.run('JSON.stringify(matchLineups)'), before);
+    mockFormationApi(instance); await instance.clickInline("switchView('formazioni')"); assert.equal(instance.run('formationEditable()'), true);
+  }
+});
+
+test('Cambiare gruppo chiude la conferma e impedisce di svuotare per errore la formazione B', async () => {
+  const instance = app(); instance.run("currentTeam='Pulcini1';currentFormationGroup='A';"); mockFormationApi(instance);
+  await instance.context.switchView('formazioni'); instance.context.clearCurrentTempoFormation();
+  await instance.context.changeFormationGroup('B'); const before = instance.run('JSON.stringify(matchLineups)'); instance.context.confirmFormationAction();
+  assert.equal(instance.run('JSON.stringify(matchLineups)'), before); assert.equal(instance.run('loadedFormationKey'), 'Pulcini1:B');
+});
+
+test('Il clic sul panchinaro configura una sostituzione e lo svuotamento rimuove anche le frecce', async () => {
+  const { context, document, run } = await loadedFormation();
+  const benchPlayer = document.getElementById('benchList').children.find(button => button.innerText.startsWith('Paolo'));
+  benchPlayer.click(); document.getElementById('modalSubstitutionOptions').children[0].click();
+  assert.equal(run('matchLineups.tempo1.sostituzioni.POR.in'), 'Paolo');
+  assert.equal(run('matchLineups.tempo1.sostituzioni.POR.out'), 'Mario');
+  assert.ok(document.getElementById('playingTimeSummary').children.find(chip => chip.innerText.startsWith('Paolo')).innerText.includes('0.5'));
+  context.clearCurrentTempoFormation(); context.confirmFormationAction();
+  assert.equal(run('Object.keys(matchLineups.tempo1.sostituzioni).length'), 0);
+});
+
+test('Una vecchia risposta di caricamento non nasconde il caricamento nuovo e non sblocca i comandi', async () => {
+  const instance = app(), pending = [];
+  mockFormationApi(instance, { formazioni: url => new Promise(resolve => pending.push({ url, resolve })) });
+  instance.run("currentTeam='Pulcini1';currentFormationGroup='A';"); const loadingA = instance.context.switchView('formazioni');
+  const loadingB = instance.context.changeFormationGroup('B');
+  pending[0].resolve({ status: 'success', lineups: fixtureLineup }); await loadingA;
+  assert.equal(instance.document.getElementById('loadingOverlay').classList.contains('hidden'), false);
+  assert.equal(instance.document.getElementById('btnSaveLineup').disabled, true);
+  pending[1].resolve({ status: 'success', lineups: fixtureLineup }); await loadingB;
+  assert.equal(instance.run('loadedFormationKey'), 'Pulcini1:B'); assert.equal(instance.run('formationEditable()'), true);
+});
+
+test('Formazione appena salvata e ricaricata mantiene convocati e tempo aggiuntivo', async () => {
+  const instance = await loadedFormation(); instance.context.selectCallupChecks(false); instance.context.applyCallupSelection(); instance.context.confirmFormationAction();
+  instance.context.addTempo(); await instance.context.saveLineupToServer();
+  const saved = instance.posted[0].lineup;
+  mockFormationApi(instance, { formazioni: async () => ({ status: 'success', lineups: saved }) });
+  await instance.context.switchView('formazioni');
+  assert.equal(instance.run('availableFormationPlayers().length'), 0); assert.equal(instance.run('tempoKeys().length'), 5);
+  assert.equal(instance.document.getElementById('tempoTabs').children.length, 5);
 });

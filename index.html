@@ -74,6 +74,7 @@
     }
     .player-node { transition: transform 0.1s ease; }
     .player-node:active { transform: scale(0.92); }
+    #viewFormazioni button:disabled, #drawerToolsFormazioni button:disabled { opacity: 0.5; cursor: wait; }
     @media (min-width: 768px) {
       body { padding-bottom: 112px; }
       .safe-top { padding-top: 18px; }
@@ -276,6 +277,7 @@
         <p class="text-xs font-bold text-amber-800">Questa categoria non prevede il modulo formazioni.</p>
       </div>
 
+        <div class="mb-3 flex items-center gap-2"><p id="formationStatus" role="status" aria-live="polite" class="flex-1 text-xs text-indigo-800"></p><button id="btnRetryFormation" onclick="switchView('formazioni')" class="hidden rounded-xl border border-indigo-200 px-3 py-2 text-xs font-bold text-indigo-700">Riprova</button></div>
         <div id="formationContainer" class="space-y-3">
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200 space-y-3">
           <div id="formationGroupControl" class="hidden"><label for="formationGroup" class="block text-[10px] font-bold text-slate-500 mb-1">Squadra della formazione</label><select id="formationGroup" onchange="changeFormationGroup(this.value)" class="w-full border border-indigo-200 rounded-xl p-2.5 text-xs font-bold"><option value="A">2017 A</option><option value="B">2017 B</option></select><button onclick="importLegacyLineup()" class="mt-2 text-[11px] font-bold text-indigo-700 underline">Importa la formazione precedente non assegnata</button></div>
@@ -463,6 +465,14 @@
   </div>
 
   <!-- MODAL AGGIUNGI PRESTITO -->
+  <div id="modalFormationAction" role="dialog" aria-modal="true" aria-labelledby="formationActionTitle" class="fixed inset-0 bg-slate-950/60 z-[60] hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full max-h-[calc(100dvh-32px)] overflow-y-auto p-5 space-y-4 shadow-2xl">
+      <h3 id="formationActionTitle" class="text-sm font-extrabold text-slate-900"></h3>
+      <p id="formationActionMessage" class="text-xs text-slate-600"></p>
+      <div class="flex gap-2"><button id="btnCancelFormationAction" onclick="closeFormationAction()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl text-xs font-bold">Annulla</button><button onclick="confirmFormationAction()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl text-xs font-bold">Conferma</button></div>
+    </div>
+  </div>
+
   <div id="modalGuestPlayer" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-100">
       <div class="flex items-center justify-between">
@@ -584,6 +594,8 @@
     let formationReady = false;
     let formationRosterReady = false;
     let formationDirty = false;
+    let callupSelectionContext = '';
+    let pendingFormationAction = null;
     const formationDrafts = new Map();
     let matchLineups = {
       tempo1: { titolari: {}, piazzati: {}, difesaCorner: {}, sostituzioni: {} },
@@ -606,6 +618,33 @@
     function newOperationId() { return window.crypto?.randomUUID ? window.crypto.randomUUID() : `op_${Date.now()}_${Math.random().toString(36).slice(2)}`; }
     function formationGroupValue() { return currentTeam === 'Pulcini1' ? currentFormationGroup : ''; }
     function formationKey() { return `${currentTeam}:${formationGroupValue()}`; }
+    function formationEditable() { return currentModule === 'formazioni' && formationReady && formationRosterReady && loadedFormationKey === formationKey(); }
+    function formationFeedback(message, retry = false) {
+      document.getElementById('formationStatus').innerText = message;
+      document.getElementById('btnRetryFormation').classList.toggle('hidden', !retry);
+    }
+    function requireFormationReady() {
+      if (formationEditable()) return true;
+      formationFeedback('Campetto non disponibile: attendi il caricamento oppure premi Riprova.', true);
+      return false;
+    }
+    function setFormationControlsReady(ready) {
+      document.querySelectorAll('#formationContainer button, #formationContainer select, #formationContainer input, #drawerToolsFormazioni button, #btnSaveLineup').forEach(control => { control.disabled = !ready; });
+    }
+    function requestFormationAction(title, message, action) {
+      pendingFormationAction = { key: formationKey(), request: viewRequestId, action };
+      document.getElementById('formationActionTitle').innerText = title;
+      document.getElementById('formationActionMessage').innerText = message;
+      document.getElementById('modalFormationAction').classList.remove('hidden');
+      document.getElementById('btnCancelFormationAction').focus();
+    }
+    function closeFormationAction() { pendingFormationAction = null; document.getElementById('modalFormationAction').classList.add('hidden'); }
+    function confirmFormationAction() {
+      const pending = pendingFormationAction;
+      closeFormationAction();
+      if (!pending || pending.key !== formationKey() || pending.request !== viewRequestId || !requireFormationReady()) return;
+      pending.action();
+    }
     function setFormationGame(value) { matchLineups.gameId = value; formationDirty = true; }
     function rememberFormationDraft() {
       if (!loadedFormationKey || !formationReady || !formationDirty) return;
@@ -634,29 +673,37 @@
     function fullFormationRoster() { return [...new Set((appData.players || []).map(player => player.name).concat(guestPlayers))]; }
     function availableFormationPlayers() { const roster = fullFormationRoster(); return Array.isArray(matchLineups.convocati) ? roster.filter(name => matchLineups.convocati.includes(name)) : roster; }
     function renderCallupOptions() {
-      const roster = fullFormationRoster(), container = document.getElementById('callupOptions'); container.innerHTML = '';
+      const roster = fullFormationRoster(), container = document.getElementById('callupOptions');
+      // Mantieni le spunte non ancora applicate quando si cambia tempo o si ridisegna il campetto.
+      const staged = callupSelectionContext === formationKey() ? new Map(Array.from(document.querySelectorAll('#callupOptions input')).map(input => [input.value, input.checked])) : new Map();
+      container.innerHTML = ''; callupSelectionContext = formationKey();
       document.getElementById('callupCount').innerText = `(${availableFormationPlayers().length}/${roster.length})`;
       roster.forEach(name => {
         const label = document.createElement('label'); label.className = 'flex items-center gap-2 rounded-xl border border-slate-200 p-2 text-xs';
-        const input = document.createElement('input'); input.type = 'checkbox'; input.value = name; input.className = 'accent-indigo-600'; input.checked = matchLineups.convocati === null || matchLineups.convocati === undefined || matchLineups.convocati.includes(name);
+        const input = document.createElement('input'); input.type = 'checkbox'; input.value = name; input.className = 'accent-indigo-600'; input.checked = staged.has(name) ? staged.get(name) : !Array.isArray(matchLineups.convocati) || matchLineups.convocati.includes(name);
         label.append(input, document.createTextNode(name)); container.appendChild(label);
       });
     }
-    function selectCallupChecks(checked) { document.querySelectorAll('#callupOptions input').forEach(input => input.checked = checked); }
-    function useFullRoster() { if (!formationReady || !formationRosterReady) return; matchLineups.convocati = null; formationDirty = true; renderPitch(); }
+    function selectCallupChecks(checked) { if (!requireFormationReady()) return; document.querySelectorAll('#callupOptions input').forEach(input => input.checked = checked); }
+    function useFullRoster() { if (!requireFormationReady()) return; matchLineups.convocati = null; callupSelectionContext = ''; formationDirty = true; renderPitch(); rememberFormationDraft(); formationFeedback('Rosa completa applicata. Premi Salva per aggiornare il foglio.'); }
     function applyCallupSelection() {
-      if (!formationReady || !formationRosterReady) return;
+      if (!requireFormationReady()) return;
       const names = Array.from(document.querySelectorAll('#callupOptions input:checked')).map(input => input.value);
-      const removed = [...new Set(tempoKeys().flatMap(key => Object.values(matchLineups[key].titolari || {}).concat(Object.values(matchLineups[key].sostituzioni || {}).map(sub => sub.in))).filter(name => name && !names.includes(name)))];
-      if (removed.length && !confirm(`Togliere dalla formazione i giocatori esclusi dalla lista? ${removed.join(', ')}`)) return;
+      const removed = [...new Set(tempoKeys().flatMap(key => ['titolari', 'piazzati', 'difesaCorner'].flatMap(field => Object.values(matchLineups[key][field] || {})).concat(Object.values(matchLineups[key].sostituzioni || {}).flatMap(sub => [sub?.in, sub?.out]))).filter(name => name && !names.includes(name)))];
+      if (removed.length) return requestFormationAction('Applica giocatori selezionati', `I giocatori esclusi saranno rimossi da tutti i tempi, inclusi piazzati e sostituzioni: ${removed.join(', ')}. Le presenze non cambiano.`, () => commitCallupSelection(names));
+      commitCallupSelection(names);
+    }
+    function commitCallupSelection(names) {
       matchLineups.convocati = names;
+      callupSelectionContext = '';
       formationDirty = true;
       tempoKeys().forEach(key => {
         const tempo = matchLineups[key];
         ['titolari', 'piazzati', 'difesaCorner'].forEach(field => Object.keys(tempo[field] || {}).forEach(role => { if (tempo[field][role] && !names.includes(tempo[field][role])) delete tempo[field][role]; }));
-        Object.keys(tempo.sostituzioni || {}).forEach(role => { const sub = tempo.sostituzioni[role]; if (!names.includes(sub.in) || !names.includes(sub.out)) delete tempo.sostituzioni[role]; });
+        Object.keys(tempo.sostituzioni || {}).forEach(role => { const sub = tempo.sostituzioni[role]; if (!names.includes(sub?.in) || !names.includes(sub?.out)) delete tempo.sostituzioni[role]; });
       });
       renderPitch(); rememberFormationDraft();
+      formationFeedback(`${names.length} giocatori applicati. Premi Salva per aggiornare il foglio.`);
     }
     async function loadFormationGames(requestId) {
       const team = currentTeam, group = formationGroupValue(); formationGames = [];
@@ -798,6 +845,10 @@
     // CAMBIO VISTA CON LAZY LOADING IMMEDIATO
     async function switchView(viewName) {
       rememberFormationDraft();
+      closeFormationAction();
+      closePlayerAssignModal();
+      closeGuestPlayerModal();
+      closeSubstitutionModal();
       currentModule = viewName;
       const requestId = ++viewRequestId;
       const viewPres = document.getElementById('viewPresenze');
@@ -829,12 +880,19 @@
         appData = { players: [], events: [], attendanceMap: {} };
         formationReady = false;
         formationRosterReady = false;
-        document.getElementById('btnSaveLineup').disabled = true;
+        callupSelectionContext = '';
+        setFormationControlsReady(false);
+        formationFeedback('Caricamento formazione e giocatori…');
         document.getElementById('formationGroupControl').classList.toggle('hidden', currentTeam !== 'Pulcini1');
         document.getElementById('formationGroup').value = currentFormationGroup;
         clearViewContent('formazioni');
-        await Promise.all([loadRosterForFormation(requestId), loadModuleData(false, requestId), loadFormationGames(requestId)]);
-        if (isActiveRequest(requestId, 'formazioni') && formationReady && formationRosterReady) { renderPitch(); document.getElementById('btnSaveLineup').disabled = false; }
+        // Il calendario è opzionale: non deve bloccare i comandi del campetto.
+        void loadFormationGames(requestId);
+        await Promise.all([loadRosterForFormation(requestId), loadModuleData(false, requestId)]);
+        if (isActiveRequest(requestId, 'formazioni')) {
+          hideLoading();
+          if (formationEditable()) { renderPitch(); setFormationControlsReady(true); formationFeedback('Campetto pronto. Le modifiche saranno inviate al foglio con Salva.'); }
+        }
       } else if (viewName === 'statistiche') {
         viewStat.classList.remove('hidden');
         navStat.className = "w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition bg-indigo-50 text-indigo-900";
@@ -900,7 +958,11 @@
       if (viewName === 'calendario') document.getElementById('calendarGameList').innerHTML = `<div class="lg:col-span-2 bg-rose-50 border border-rose-200 p-5 rounded-2xl text-center text-xs font-bold text-rose-700">${safe}</div>`;
       if (viewName === 'presenze') document.getElementById('playerList').innerHTML = `<div class="bg-rose-50 border border-rose-200 p-5 rounded-2xl text-center text-xs font-bold text-rose-700">${safe}</div>`;
       if (viewName === 'statistiche') document.getElementById('generalStatsList').innerHTML = `<div class="bg-rose-50 border border-rose-200 p-5 rounded-2xl text-center text-xs font-bold text-rose-700">${safe}</div>`;
-      if (viewName === 'formazioni') document.getElementById('pitchSlotsContainer').innerHTML = `<div class="h-full flex items-center justify-center text-xs font-bold text-rose-100 text-center px-6">${safe}</div>`;
+      if (viewName === 'formazioni') {
+        setFormationControlsReady(false);
+        formationFeedback(message || 'Impossibile caricare il campetto.', true);
+        document.getElementById('pitchSlotsContainer').innerHTML = `<div class="h-full flex items-center justify-center text-xs font-bold text-rose-100 text-center px-6">${safe}</div>`;
+      }
       if (viewName === 'divise') document.getElementById('uniformList').innerHTML = `<div class="bg-rose-50 border border-rose-200 p-5 rounded-2xl text-center text-xs font-bold text-rose-700">${safe}</div>`;
     }
 
@@ -916,6 +978,7 @@
         if (!isActiveRequest(requestId, requestedModule) || requestedTeam !== currentTeam || (requestedModule === 'formazioni' && requestedGroup !== formationGroupValue())) return;
         if (data.status === "success") {
           if (currentModule === "formazioni") {
+            if (!data.lineups || typeof data.lineups !== 'object' || Array.isArray(data.lineups)) throw new Error('Formazione non disponibile: premi Riprova.');
             if (data.lineups) {
               loadedFormationKey = formationKey();
               formationDirty = formationDrafts.has(loadedFormationKey);
@@ -939,7 +1002,7 @@
         console.error('Cresole80 caricamento', err);
         if (isActiveRequest(requestId, requestedModule) && requestedTeam === currentTeam) showViewError(requestedModule, err.message || 'Impossibile caricare i dati.');
       } finally {
-        hideLoading();
+        if (requestedModule !== 'formazioni' && isActiveRequest(requestId, requestedModule) && requestedTeam === currentTeam) hideLoading();
       }
     }
 
@@ -965,7 +1028,7 @@
       const requestedTeam = currentTeam;
       try {
         const data = await fetchJson(`${API_URL}?team=${encodeURIComponent(currentTeam)}&mode=presenze&_t=${Date.now()}`, { mode: 'cors' });
-        if (isActiveRequest(requestId, 'formazioni') && requestedTeam === currentTeam) { if (data.status !== 'success') throw new Error(data.message || 'Rosa non disponibile'); appData = data; formationRosterReady = true; }
+        if (isActiveRequest(requestId, 'formazioni') && requestedTeam === currentTeam) { if (data.status !== 'success' || !Array.isArray(data.players)) throw new Error(data.message || 'Rosa non disponibile: premi Riprova.'); appData = data; formationRosterReady = true; }
       } catch (error) { console.warn('Cresole80: rosa non aggiornata', error); if (isActiveRequest(requestId, 'formazioni')) showViewError('formazioni', error.message || 'Rosa non disponibile'); }
     }
 
@@ -1296,6 +1359,7 @@
     }
 
     function selectTempo(t) {
+      if (!requireFormationReady() || !matchLineups[t]) return;
       currentActiveTempo = t;
       tempoKeys().forEach(k => {
         const btn = document.getElementById('btn' + k.charAt(0).toUpperCase() + k.slice(1));
@@ -1327,21 +1391,26 @@
     }
 
     function addTempo() {
-      if (!formationReady || !formationRosterReady) return;
+      if (!requireFormationReady()) return;
       const next = Math.max(...tempoKeys().map(key => Number(key.replace('tempo', '')))) + 1;
       const key = `tempo${next}`;
       matchLineups[key] = emptyTempo();
       formationDirty = true;
       selectTempo(key);
+      rememberFormationDraft();
+      formationFeedback(`${next}° tempo aggiunto. Premi Salva per aggiornare il foglio.`);
     }
 
     function clearCurrentTempoFormation() {
-      if (!formationReady || !formationRosterReady) return;
-      if (confirm(`Vuoi svuotare la formazione e i piazzati del ${currentActiveTempo.replace('tempo', '')}° Tempo?`)) {
-        matchLineups[currentActiveTempo] = emptyTempo();
+      if (!requireFormationReady()) return;
+      const tempo = currentActiveTempo;
+      requestFormationAction('Svuota campetto', `Vuoi svuotare titolari, piazzati, corner avversario e sostituzioni del ${tempo.replace('tempo', '')}° tempo? Gli altri tempi e la lista dei giocatori resteranno invariati.`, () => {
+        matchLineups[tempo] = emptyTempo();
         formationDirty = true;
         renderPitch();
-      }
+        rememberFormationDraft();
+        formationFeedback('Tempo svuotato. Premi Salva per aggiornare il foglio.');
+      });
     }
 
     function formatPlayerSplitName(fullName) {
@@ -1506,6 +1575,7 @@
     }
 
     function openPlayerAssignModal(slotId, slotName) {
+      if (!requireFormationReady()) return;
       currentAssignSlot = slotId;
       document.getElementById('modalAssignRoleLabel').innerText = "Ruolo: " + slotName;
       const container = document.getElementById('modalPlayerListOptions');
@@ -1547,6 +1617,7 @@
     }
 
     function openSubstitutionModal(playerName) {
+      if (!requireFormationReady()) return;
       const active = matchLineups[currentActiveTempo] || emptyTempo();
       const starters = Object.entries(active.titolari || {}).filter(([, name]) => name && name !== playerName);
       if (!starters.length) return alert('Inserisci prima i giocatori in campo.');
@@ -1571,6 +1642,7 @@
     }
 
     function assignSubstitution(roleId) {
+      if (!requireFormationReady()) return;
       const active = matchLineups[currentActiveTempo];
       if (!active || !selectedSubstitute || !active.titolari?.[roleId]) return;
       if (!active.sostituzioni) active.sostituzioni = {};
@@ -1584,6 +1656,7 @@
     }
 
     function assignPlayerToRole(playerName) {
+      if (!requireFormationReady() || !currentAssignSlot) return;
       formationDirty = true;
       if (!matchLineups[currentActiveTempo].titolari) matchLineups[currentActiveTempo].titolari = {};
 
@@ -1604,12 +1677,14 @@
     }
 
     function updateSetpiece(type, val) {
+      if (!requireFormationReady()) return;
       if (!matchLineups[currentActiveTempo].piazzati) matchLineups[currentActiveTempo].piazzati = {};
       if (matchLineups[currentActiveTempo].piazzati[type] !== val) formationDirty = true;
       matchLineups[currentActiveTempo].piazzati[type] = val;
     }
 
     function updateDefenseCorner(type, val) {
+      if (!requireFormationReady()) return;
       if (!matchLineups[currentActiveTempo].difesaCorner) matchLineups[currentActiveTempo].difesaCorner = {};
       if (matchLineups[currentActiveTempo].difesaCorner[type] !== val) formationDirty = true;
       matchLineups[currentActiveTempo].difesaCorner[type] = val;
@@ -1642,6 +1717,7 @@
     }
 
     function openGuestPlayerModal() {
+      if (!requireFormationReady()) return;
       document.getElementById('guestPlayerName').value = "";
       document.getElementById('modalGuestPlayer').classList.remove('hidden');
     }
@@ -1651,6 +1727,7 @@
     }
 
     function confirmAddGuestPlayer() {
+      if (!requireFormationReady()) return;
       const name = document.getElementById('guestPlayerName').value.trim();
       if (!name) return alert("Inserisci il nome del ragazzo");
 
